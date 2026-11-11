@@ -1,46 +1,48 @@
 # GenePriori
 
-**Leakage-aware gene prioritization for translational genomics.**
+Rank genes for any disease by fusing Open Targets evidence with STRING network
+propagation, and measure performance under holdouts that prevent literature
+circularity from inflating the results.
 
-GenePriori ranks genes for a disease by fusing Open Targets evidence with
-STRING network propagation, and measures performance under holdouts that
-prevent the most common evaluation artefact in gene prioritization:
-using literature-encoded associations to "predict" associations that were
-themselves derived from the literature.
-
-- **Ready to use**: one command returns a ranked gene table for any EFO/MONDO disease.
-- **Leakage-aware**: drug-target and genetic-association holdouts are masked at scoring time, with an auditor and cross-validation.
-- **Reproducible**: deterministic seeds, cached inputs with checksums, and a run manifest for every output.
-- **Extensible**: a multi-agent claim debate is included, with heuristic agents that need no API key.
+```bash
+genepriori rank --disease "breast carcinoma" --network ppr
+```
 
 ---
 
-## Install
+## Install from GitHub
+
+Requires Python 3.9+ and `git`.
 
 ```bash
+# 1. Clone
+git clone https://github.com/Jyx0208/Genepriori.git
+cd Genepriori
+
+# 2. Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 3. Install (editable, so updates are picked up with git pull)
 pip install -e .
-```
 
-Requires Python 3.9+. Dependencies: `numpy`, `scipy`, `requests`, `PyYAML`.
-
-Verify the installation:
-
-```bash
+# 4. Verify
 genepriori --version
 genepriori doctor
 ```
 
+`genepriori doctor` checks Python, dependencies, the cache directory and
+network access. Everything else works offline once data is cached.
+
 ---
 
-## 60-second offline demo
-
-No network, no API key, no downloads — synthetic data is generated locally:
+## Quick start: run it offline first
 
 ```bash
 genepriori demo
 ```
 
-Output:
+This uses synthetic data, needs no network and writes to `demo_results/`:
 
 ```
 synthetic breast carcinoma: 253 genes ranked
@@ -57,63 +59,161 @@ synthetic breast carcinoma  drug      mask      0.2162  0.0950  0.0983  0.3341  
 synthetic breast carcinoma  genetics  mask      0.2225  0.1316  0.0591  0.3859   0.7267
 ```
 
-Files are written to `demo_results/` (`rank/ranked_genes.csv`,
-`evaluation/metrics.json`, `run_manifest.json`).
-
-> The demo data is synthetic and deliberately small. It exists to prove the
-> pipeline runs end to end; it says nothing about real disease performance.
+If this prints a table, the installation is good.
 
 ---
 
-## Real data workflow
+## Usage
+
+### 1. Download the PPI network (once)
 
 ```bash
-# 1. STRING human PPI network (~200 MB download, cached once)
 genepriori fetch-ppi
+```
 
-# 2. Open Targets evidence for a disease (2,000 genes by default)
+Downloads the STRING human network, filters to `combined_score >= 400`, and
+caches a compact edge list. The first run downloads a few hundred MB;
+later runs read the cache.
+
+### 2. Download disease evidence
+
+```bash
 genepriori fetch --disease "breast carcinoma"
-
-# 3. Rank genes
-genepriori rank --disease "breast carcinoma" --network ppr -o results/breast
-
-# 4. Leakage-controlled evaluation (dual holdout, 5-fold)
-genepriori evaluate --disease "breast carcinoma" --holdout both -o results/eval
 ```
 
-Any ontology identifier works too:
+Fetches up to 2,000 associated genes from Open Targets and caches the scores.
+Don't know the exact name?
 
 ```bash
-genepriori rank --disease MONDO_0004989
 genepriori search-disease "triple-negative breast"
-```
-
-Built-in registry (19 diseases, 7 solid tumours):
-
-```bash
-genepriori list-diseases
+genepriori list-diseases                       # 19 built-in diseases
 genepriori list-diseases --category oncology
 ```
 
----
+Any ontology ID also works:
 
-## What the outputs mean
+```bash
+genepriori fetch --disease MONDO_0004989
+```
 
-`ranked_genes.csv` contains one row per gene:
+### 3. Rank genes
+
+```bash
+genepriori rank --disease "breast carcinoma" --network ppr -o results/breast
+```
+
+```
+breast carcinoma (MONDO_0004989) - 1000 genes
+rank  gene    score     confidence  types  network
+----  ------  --------  ----------  -----  -------
+1     PTEN    0.660046  0.95        5
+2     BRCA1   0.551209  0.83        4
+3     TP53    0.522721  0.83        4
+4     ESR1    0.484185  0.83        4
+5     BRCA2   0.483169  0.71        3
+```
+
+Common options:
+
+| option | values | default |
+|---|---|---|
+| `--weights` | `balanced`, `genetics`, `translational`, `network`, `no_literature`, `literature_only`, or a YAML file | `balanced` |
+| `--network` | `ppr`, `rwr`, `neighbor_voting`, `hd`, `ensemble`, `none` | `ppr` |
+| `--top` | rows printed | `20` |
+| `--max-genes` | Open Targets cap | `2000` |
+| `-o` | output directory | `results/rank_<id>` |
+
+Use your own weights:
+
+```bash
+cat > my_weights.yaml <<'EOF'
+drug: 0.3
+genetics: 0.3
+expression: 0.05
+pathway: 0.2
+literature: 0.1
+animal_model: 0.05
+EOF
+genepriori rank --disease MONDO_0004989 --weights my_weights.yaml
+```
+
+### 4. Read the output
+
+`ranked_genes.csv` — one row per gene:
 
 | column | meaning |
 |---|---|
 | `rank` | position in the final ranking |
-| `gene` | HGNC symbol from Open Targets |
-| `score` | final score (direct evidence blended with network propagation) |
+| `gene` | HGNC symbol |
+| `score` | final score (direct evidence blended with network) |
 | `confidence` | 0.35 + 0.12 × number of contributing evidence types, capped at 1 |
-| `n_evidence_types` | how many of the six evidence types contribute |
-| `network_discovered` | 1 when the gene has no direct evidence and was found through the PPI |
-| `drug … animal_model` | weighted contribution of each evidence type to the score |
-| `ensembl_id` | Ensembl gene identifier |
+| `n_evidence_types` | how many of the six types contribute |
+| `network_discovered` | 1 = no direct evidence, found through the PPI |
+| `drug`, `genetics`, `expression`, `pathway`, `literature`, `animal_model` | weighted contribution of each type |
+| `ensembl_id` | Ensembl gene ID |
 
-Every run also writes `result.json` and `run_manifest.json` (package version,
-Python, parameters, data provenance, timestamps).
+`result.json` — the same data in JSON.
+`run_manifest.json` — version, parameters, data provenance, timestamp.
+
+### 5. Measure it with leakage control
+
+```bash
+genepriori evaluate --disease "breast carcinoma" --holdout both -o results/eval
+```
+
+```
+auprc             holdout   protocol  mean    sd      ci_low  ci_high  R@20
+----------------  --------  --------  ------  ------  ------  -------  ------
+breast carcinoma  drug      mask      0.0224  0.0128  0.0065  0.0383   0.0758
+breast carcinoma  genetics  mask      0.1637  0.0140  0.1463  0.1812   0.0168
+```
+
+What it does: positives are genes with the holdout evidence type above 0.30.
+That evidence type is masked during scoring, so the model has to recover them
+from the other five types plus the network. Two protocols:
+
+- `mask` (default) — holdout evidence masked for every gene; folds partition
+  the positives to report stability.
+- `restore` — one fifth of positives is removed from the gold standard and its
+  holdout evidence restored; the rest is evaluated (`--protocol restore`).
+
+Useful flags:
+
+```bash
+genepriori evaluate --disease MONDO_0004989 --holdout genetics --folds 5
+genepriori evaluate --disease MONDO_0004989 --positive-threshold 0.2
+```
+
+If you see `Only N positives ... needs at least 5`, lower
+`--positive-threshold`, lower `--folds`, or fetch more genes with
+`--max-genes`.
+
+### 6. Compare method variants across diseases
+
+```bash
+genepriori benchmark --diseases oncology --holdout both \
+    --variants baseline,ppr,rwr,genetics_ppr -o results/benchmark
+```
+
+Runs every variant on every selected disease and reports paired bootstrap
+deltas, win rates, sign tests and BH-adjusted p-values. `--diseases` accepts
+`oncology`, `registry` (all 19), a category, or a comma-separated list.
+
+### 7. Multi-agent debate (optional)
+
+```bash
+genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both
+```
+
+Four agents propose parameterised claims over three rounds; a Governor allocates
+the budget and accepts claims only under explicit statistical criteria. No API
+key needed. For the LLM variant:
+
+```bash
+export GENEPRIORI_LLM_API_KEY=...        # or DEEPSEEK_API_KEY / OPENAI_API_KEY
+export GENEPRIORI_LLM_BASE_URL=https://api.deepseek.com/v1
+genepriori debate --mode llm
+```
 
 ---
 
@@ -122,23 +222,17 @@ Python, parameters, data provenance, timestamps).
 ```python
 from genepriori import prioritize
 
-result = prioritize(
-    "breast carcinoma",
-    weights="translational",   # preset: balanced | genetics | translational | network | no_literature | literature_only
-    network="ppr",             # ppr | rwr | neighbor_voting | hd | ensemble | none
-)
-print(result.top(10))
+result = prioritize("breast carcinoma", weights="translational", network="ppr")
+for row in result.top(10):
+    print(row.rank, row.gene, round(row.score, 4), row.network_discovered)
+
 result.to_csv("ranked_genes.csv")
 ```
 
-Low-level building blocks are exported as well:
+Lower-level pieces, if you want to build your own pipeline:
 
 ```python
-from genepriori import (
-    fuse_gene_scores, fuse_gene_scores_detailed, propagate,
-    build_positives, kfold_splits, evaluate_ranking,
-    Claim, LeakageAuditor,
-)
+from genepriori import fuse_gene_scores, propagate, evaluate_ranking
 
 fused = fuse_gene_scores(
     {"G1": {"drug": 0.9, "genetics": 0.2}, "G2": {"genetics": 0.9}},
@@ -146,150 +240,50 @@ fused = fuse_gene_scores(
     holdout_type="drug",          # drug weight forced to 0, rest renormalized
 )
 propagated = propagate(fused, [("G1", "G2", 0.9)], algorithm="ppr", damping=0.85)
+print(evaluate_ranking(propagated, {"G1"}))
 ```
 
 ---
 
-## Core concepts
+## Command reference
 
-### Six standardized evidence types
-
-Open Targets fine-grained evidence is mapped to `drug`, `genetics`,
-`expression`, `pathway`, `literature`, `animal_model`; the maximum score per
-type and gene is retained. Scores are min-max normalized per type, then
-weighted-summed with non-negative weights.
-
-### Dual holdouts
-
-| holdout | positives | masked evidence |
-|---|---|---|
-| `drug` | genes with drug score > 0.30 | drug |
-| `genetics` | genes with genetics score > 0.30 | genetics |
-
-The holdout type's weight is forced to zero and the remaining weights are
-renormalized, so measured performance comes from complementary signals.
-
-### Two evaluation protocols
-
-Two protocols are available (`--protocol`):
-
-- **`mask`** (default, strictest): holdout evidence is masked for every gene.
-  The folds partition the positives; each fold measures recovery against all
-  non-positives. Reported mean/SD reflects stability across positive subsets.
-- **`restore`**: for each fold, that fold's positives are removed from the gold
-  standard and their holdout evidence is restored; the remaining positives are
-  evaluated. Ranking is recomputed per fold.
-
-In both protocols, evaluated positives never contribute their holdout
-evidence.
-
-### What leakage control does *not* do
-
-The auditor blocks direct use of the holdout type. It cannot remove semantic
-collinearity among the remaining evidence types — for example, literature
-annotations still encode published drug–gene relationships. This is a known
-limitation and is reported as such.
-
-### Network propagation
-
-Propagation runs on a 1-hop subgraph of seed genes (top 30 neighbours per
-seed, edges with score ≥ 0.4). Seed scores are blended
-`0.7 × direct + 0.3 × network`; network-discovered genes receive
-`0.25 × network × 1/(1 + ln(degree + 1))`, capped at 80 genes. Network scores
-are min-max normalized before blending so the blend weight is meaningful.
-
----
-
-## CLI reference
-
-| command | purpose |
+| command | what it does |
 |---|---|
-| `genepriori demo` | offline synthetic end-to-end run |
-| `genepriori doctor` | check environment, cache, network access |
-| `genepriori list-diseases` | built-in 19-disease registry |
-| `genepriori search-disease TEXT` | resolve a disease name to an ID |
+| `genepriori demo` | offline synthetic run |
+| `genepriori doctor` | check environment, cache, network |
+| `genepriori list-diseases` | built-in registry |
+| `genepriori search-disease TEXT` | name → ontology ID |
 | `genepriori fetch --disease D` | download Open Targets evidence |
-| `genepriori fetch-ppi` | download and cache STRING |
-| `genepriori rank --disease D` | ranked genes + manifest |
-| `genepriori evaluate --disease D` | dual-holdout 5-fold CV |
-| `genepriori benchmark --diseases oncology` | compare method variants across diseases |
-| `genepriori debate --holdout both` | multi-agent claim debate (`--mode llm` optional) |
-| `genepriori config --write run.yaml` | template configuration |
+| `genepriori fetch-ppi` | download STRING network |
+| `genepriori rank --disease D` | ranked genes |
+| `genepriori evaluate --disease D` | dual-holdout K-fold CV |
+| `genepriori benchmark` | compare variants across diseases |
+| `genepriori debate` | multi-agent claim debate |
+| `genepriori config --write run.yaml` | configuration template |
 
 Global flags work before or after the subcommand: `--cache-dir`, `--offline`,
-`--json`, `-v`, `-q`.
-
-Run `genepriori <command> --help` for all options.
+`--json`, `-v`, `-q`. Run `genepriori <command> --help` for all options.
 
 ---
 
-## Multi-agent debate
+## Troubleshooting
 
-```bash
-genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both
-```
+**`No cached evidence ...`** — run `genepriori fetch --disease <id>` first, or
+drop `--offline`.
 
-Four agents (CausalGenetics, NetworkMechanism, Translational,
-ConsensusDesigner) propose parameterized claims over three rounds. Each round:
-propose → audit → score/select → execute → accept/reject → feedback. The
-Governor allocates a 12-claim budget (40%/35%/remaining), scores claims from
-predicted AUPRC/Recall gains, cost and novelty, and accepts claims only when
-one of three criteria holds (majority rule, bootstrap CI above zero, or a
-strong consistent override). The LeakageAuditor is a hard gate.
+**`Only N positives ... needs at least 5`** — lower `--positive-threshold` or
+`--folds`, or increase `--max-genes`.
 
-LLM mode uses any OpenAI-compatible endpoint (DeepSeek by default):
+**Where is the cache?** `~/.genepriori`. Override with `GENEPRIORI_HOME`,
+`--cache-dir`, or `cache_dir` in the config. `manifest.json` records every
+download with URL, timestamp, size and SHA-256.
 
-```bash
-export GENEPRIORI_LLM_API_KEY=...          # or DEEPSEEK_API_KEY / OPENAI_API_KEY
-export GENEPRIORI_LLM_BASE_URL=https://api.deepseek.com/v1
-export GENEPRIORI_LLM_MODEL=deepseek-chat
-genepriori debate --mode llm
-```
-
-If a call fails, the agent falls back to its heuristic counterpart, so the
-debate always completes.
+**Old EFO IDs no longer resolve** — Open Targets moved to MONDO. Use
+`genepriori search-disease` to find the current ID.
 
 ---
-
-## Data sources and versions
-
-| source | default | pin for reproduction |
-|---|---|---|
-| Open Targets Platform | current release, live GraphQL API | `--ot-release` is recorded in the manifest; fetch date is stored per disease |
-| STRING | v12.5 | `--string-version 12.0` (older releases) |
-
-Downloads are cached under `~/.genepriori` (override with `GENEPRIORI_HOME`,
-`--cache-dir`, or `cache_dir` in the config). Each artifact is registered in
-`manifest.json` with URL, timestamp, size and SHA-256.
-
----
-
-## Reproducing published results
-
-Pin the data versions and record the manifest:
-
-```bash
-genepriori fetch-ppi --string-version 12.0
-genepriori benchmark --diseases registry --holdout both \
-    --variants baseline,ppr,rwr,genetics_ppr,translational_ppr
-```
-
-See [docs/reproduction.md](docs/reproduction.md) for version pinning, the
-commands behind each output table, and the settings that affect numbers.
-
----
-
-## Project status
-
-- Algorithmic core, data layer, CLI, evaluation and debate: implemented and tested.
-- Test suite: `pytest` (offline, no network required).
-- Not included: web UI, non-human organisms, automated PyPI publishing.
-
-## Citation
-
-See [CITATION.cff](CITATION.cff).
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE). Third-party data remains subject to the
-terms of Open Targets and STRING.
+Apache-2.0. Third-party data remains subject to the terms of Open Targets and
+STRING.
