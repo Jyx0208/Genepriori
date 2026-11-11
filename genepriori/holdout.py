@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import Dict, Iterable, List, Mapping, Sequence, Set, Tuple
+from typing import Iterable, List, Mapping, Set
 
 from .evidence import normalize_holdout_type
 
@@ -14,7 +14,7 @@ def build_positives(
     *,
     threshold: float = 0.30,
 ) -> Set[str]:
-    """Positives: genes with holdout-type score > threshold (manuscript: 0.30).
+    """Positives: genes with holdout-type score > threshold (default: 0.30).
 
     Holdout types: drug (known_drug) or genetics (genetic_association).
     """
@@ -37,6 +37,8 @@ def kfold_splits(
     Each returned set is the *held-out test positives* for one fold
     (removed from the gold standard for that fold, per Methods).
     """
+    if n_folds < 2:
+        raise ValueError(f"n_folds must be >= 2, got {n_folds}.")
     items = sorted(set(positives))
     rng = random.Random(seed)
     rng.shuffle(items)
@@ -51,4 +53,5 @@ def kfold_splits(
 
 
 def train_positives(all_positives: Set[str], test_fold: Set[str]) -> Set[str]:
+    """Training positives for one fold: all positives minus the test fold."""
     return set(all_positives) - set(test_fold)

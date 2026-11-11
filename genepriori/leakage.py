@@ -3,19 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Dict, Mapping, Tuple
 
-from .evidence import normalize_holdout_type
+from .evidence import normalize_holdout_type, renorm_weights
+from .network import SUPPORTED_ALGORITHMS
 
-SUPPORTED_NETWORK_ALGORITHMS = {
-    "",
-    "none",
-    "ppr",
-    "rwr",
-    "neighbor_voting",
-    "hd",
-    "ensemble",
-}
+# Kept as a module-level name for backward compatibility. The whitelist is
+# defined next to the implementations in ``network.py`` so the auditor can
+# never accept an algorithm the runner cannot execute.
+SUPPORTED_NETWORK_ALGORITHMS = SUPPORTED_ALGORITHMS
 
 
 @dataclass
@@ -54,14 +50,16 @@ class LeakageAuditor:
         intervention = claim.intervention or {}
         weights = intervention.get("evidence_type_weights", {}) or {}
 
-        if float(weights.get(holdout, 0.0) or 0.0) > 0.0:
+        # Any non-zero holdout weight is a policy violation; negative weights
+        # would be clipped to 0 at execution time but are still rejected here.
+        if abs(float(weights.get(holdout, 0.0) or 0.0)) > 1e-12:
             return False, f"holdout evidence type '{holdout}' has non-zero weight"
 
         if bool(intervention.get("allow_holdout_evidence", False)):
             return False, "intervention explicitly enables holdout evidence"
 
         algo = str(intervention.get("network_algorithm", "")).strip().lower()
-        if algo not in SUPPORTED_NETWORK_ALGORITHMS:
+        if algo not in SUPPORTED_ALGORITHMS:
             return False, f"unsupported network algorithm: {algo}"
 
         ds_weights = intervention.get("disease_specific_weights", {}) or {}
@@ -70,7 +68,7 @@ class LeakageAuditor:
         for disease_id, dsw in ds_weights.items():
             if not isinstance(dsw, dict):
                 return False, f"disease_specific_weights[{disease_id}] must be a dict"
-            if float(dsw.get(holdout, 0.0) or 0.0) > 0.0:
+            if abs(float(dsw.get(holdout, 0.0) or 0.0)) > 1e-12:
                 return (
                     False,
                     f"holdout evidence type '{holdout}' has non-zero "
@@ -84,7 +82,7 @@ class LeakageAuditor:
             if not isinstance(cfg, dict):
                 return False, f"disease_specific_network[{disease_id}] must be a dict"
             d_algo = str(cfg.get("network_algorithm", algo)).strip().lower()
-            if d_algo not in SUPPORTED_NETWORK_ALGORITHMS:
+            if d_algo not in SUPPORTED_ALGORITHMS:
                 return (
                     False,
                     f"unsupported disease-specific network algorithm "
@@ -99,6 +97,4 @@ def apply_holdout_mask_to_weights(
     holdout_type: str,
 ) -> Dict[str, float]:
     """Convenience wrapper used at execution time (in addition to claim audit)."""
-    from .evidence import renorm_weights
-
     return renorm_weights(weights, holdout_type=holdout_type)

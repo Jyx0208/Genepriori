@@ -1,0 +1,21 @@
+{
+  "diseases/MONDO_9000001.json": {
+    "fetched_at": "2026-01-01T00:00:00+00:00",
+    "path": "diseases/MONDO_9000001.json",
+    "source": "synthetic demo data (not Open Targets)",
+    "url": null
+  },
+  "diseases/MONDO_9000002.json": {
+    "fetched_at": "2026-01-01T00:00:00+00:00",
+    "path": "diseases/MONDO_9000002.json",
+    "source": "synthetic demo data (not Open Targets)",
+    "url": null
+  },
+  "ppi/v12.5/9606.edges.min400.tsv.gz": {
+    "fetched_at": "2026-01-01T00:00:00+00:00",
+    "n_edges": 780,
+    "path": "ppi/v12.5/9606.edges.min400.tsv.gz",
+    "source": "synthetic demo data (not STRING)",
+    "url": null
+  }
+}

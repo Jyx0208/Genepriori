@@ -1,0 +1,1570 @@
+{
+  "disease_id": "MONDO_9000002",
+  "disease_name": "synthetic neurodegenerative disease",
+  "ensembl_ids": {
+    "GENE002": "ENSG00000000001",
+    "GENE003": "ENSG00000000002",
+    "GENE004": "ENSG00000000003",
+    "GENE006": "ENSG00000000005",
+    "GENE007": "ENSG00000000006",
+    "GENE009": "ENSG00000000008",
+    "GENE011": "ENSG00000000010",
+    "GENE012": "ENSG00000000011",
+    "GENE013": "ENSG00000000012",
+    "GENE015": "ENSG00000000014",
+    "GENE016": "ENSG00000000015",
+    "GENE018": "ENSG00000000017",
+    "GENE020": "ENSG00000000019",
+    "GENE021": "ENSG00000000020",
+    "GENE022": "ENSG00000000021",
+    "GENE024": "ENSG00000000023",
+    "GENE025": "ENSG00000000024",
+    "GENE027": "ENSG00000000026",
+    "GENE029": "ENSG00000000028",
+    "GENE030": "ENSG00000000029",
+    "GENE031": "ENSG00000000030",
+    "GENE033": "ENSG00000000032",
+    "GENE034": "ENSG00000000033",
+    "GENE036": "ENSG00000000035",
+    "GENE038": "ENSG00000000037",
+    "GENE039": "ENSG00000000038",
+    "GENE040": "ENSG00000000039",
+    "GENE042": "ENSG00000000041",
+    "GENE043": "ENSG00000000042",
+    "GENE045": "ENSG00000000044",
+    "GENE047": "ENSG00000000046",
+    "GENE048": "ENSG00000000047",
+    "GENE049": "ENSG00000000048",
+    "GENE051": "ENSG00000000050",
+    "GENE052": "ENSG00000000051",
+    "GENE054": "ENSG00000000053",
+    "GENE056": "ENSG00000000055",
+    "GENE057": "ENSG00000000056",
+    "GENE058": "ENSG00000000057",
+    "GENE060": "ENSG00000000059",
+    "GENE061": "ENSG00000000060",
+    "GENE063": "ENSG00000000062",
+    "GENE065": "ENSG00000000064",
+    "GENE066": "ENSG00000000065",
+    "GENE067": "ENSG00000000066",
+    "GENE069": "ENSG00000000068",
+    "GENE070": "ENSG00000000069",
+    "GENE072": "ENSG00000000071",
+    "GENE074": "ENSG00000000073",
+    "GENE075": "ENSG00000000074",
+    "GENE076": "ENSG00000000075",
+    "GENE078": "ENSG00000000077",
+    "GENE079": "ENSG00000000078",
+    "GENE081": "ENSG00000000080",
+    "GENE083": "ENSG00000000082",
+    "GENE084": "ENSG00000000083",
+    "GENE085": "ENSG00000000084",
+    "GENE087": "ENSG00000000086",
+    "GENE088": "ENSG00000000087",
+    "GENE090": "ENSG00000000089",
+    "GENE092": "ENSG00000000091",
+    "GENE093": "ENSG00000000092",
+    "GENE094": "ENSG00000000093",
+    "GENE096": "ENSG00000000095",
+    "GENE097": "ENSG00000000096",
+    "GENE099": "ENSG00000000098",
+    "GENE101": "ENSG00000000100",
+    "GENE102": "ENSG00000000101",
+    "GENE103": "ENSG00000000102",
+    "GENE105": "ENSG00000000104",
+    "GENE106": "ENSG00000000105",
+    "GENE108": "ENSG00000000107",
+    "GENE110": "ENSG00000000109",
+    "GENE111": "ENSG00000000110",
+    "GENE112": "ENSG00000000111",
+    "GENE114": "ENSG00000000113",
+    "GENE115": "ENSG00000000114",
+    "GENE117": "ENSG00000000116",
+    "GENE119": "ENSG00000000118",
+    "GENE120": "ENSG00000000119",
+    "GENE121": "ENSG00000000120",
+    "GENE123": "ENSG00000000122",
+    "GENE124": "ENSG00000000123",
+    "GENE126": "ENSG00000000125",
+    "GENE128": "ENSG00000000127",
+    "GENE129": "ENSG00000000128",
+    "GENE130": "ENSG00000000129",
+    "GENE132": "ENSG00000000131",
+    "GENE133": "ENSG00000000132",
+    "GENE135": "ENSG00000000134",
+    "GENE137": "ENSG00000000136",
+    "GENE138": "ENSG00000000137",
+    "GENE139": "ENSG00000000138",
+    "GENE141": "ENSG00000000140",
+    "GENE142": "ENSG00000000141",
+    "GENE144": "ENSG00000000143",
+    "GENE146": "ENSG00000000145",
+    "GENE147": "ENSG00000000146",
+    "GENE148": "ENSG00000000147",
+    "GENE150": "ENSG00000000149",
+    "GENE151": "ENSG00000000150",
+    "GENE153": "ENSG00000000152",
+    "GENE155": "ENSG00000000154",
+    "GENE156": "ENSG00000000155",
+    "GENE157": "ENSG00000000156",
+    "GENE159": "ENSG00000000158",
+    "GENE160": "ENSG00000000159",
+    "GENE162": "ENSG00000000161",
+    "GENE164": "ENSG00000000163",
+    "GENE165": "ENSG00000000164",
+    "GENE166": "ENSG00000000165",
+    "GENE168": "ENSG00000000167",
+    "GENE169": "ENSG00000000168",
+    "GENE171": "ENSG00000000170",
+    "GENE173": "ENSG00000000172",
+    "GENE174": "ENSG00000000173",
+    "GENE175": "ENSG00000000174",
+    "GENE177": "ENSG00000000176",
+    "GENE178": "ENSG00000000177",
+    "GENE180": "ENSG00000000179",
+    "GENE182": "ENSG00000000181",
+    "GENE183": "ENSG00000000182",
+    "GENE184": "ENSG00000000183",
+    "GENE186": "ENSG00000000185",
+    "GENE187": "ENSG00000000186",
+    "GENE189": "ENSG00000000188",
+    "GENE191": "ENSG00000000190",
+    "GENE192": "ENSG00000000191",
+    "GENE193": "ENSG00000000192",
+    "GENE195": "ENSG00000000194",
+    "GENE196": "ENSG00000000195",
+    "GENE198": "ENSG00000000197",
+    "GENE200": "ENSG00000000199",
+    "GENE201": "ENSG00000000200",
+    "GENE202": "ENSG00000000201",
+    "GENE204": "ENSG00000000203",
+    "GENE205": "ENSG00000000204",
+    "GENE207": "ENSG00000000206",
+    "GENE209": "ENSG00000000208",
+    "GENE210": "ENSG00000000209",
+    "GENE211": "ENSG00000000210",
+    "GENE213": "ENSG00000000212",
+    "GENE214": "ENSG00000000213",
+    "GENE216": "ENSG00000000215",
+    "GENE218": "ENSG00000000217",
+    "GENE219": "ENSG00000000218",
+    "GENE220": "ENSG00000000219",
+    "GENE222": "ENSG00000000221",
+    "GENE223": "ENSG00000000222",
+    "GENE225": "ENSG00000000224",
+    "GENE227": "ENSG00000000226",
+    "GENE228": "ENSG00000000227",
+    "GENE229": "ENSG00000000228",
+    "GENE231": "ENSG00000000230",
+    "GENE232": "ENSG00000000231",
+    "GENE234": "ENSG00000000233",
+    "GENE236": "ENSG00000000235",
+    "GENE237": "ENSG00000000236",
+    "GENE238": "ENSG00000000237",
+    "GENE240": "ENSG00000000239",
+    "GENE241": "ENSG00000000240",
+    "GENE243": "ENSG00000000242",
+    "GENE245": "ENSG00000000244",
+    "GENE246": "ENSG00000000245",
+    "GENE247": "ENSG00000000246",
+    "GENE249": "ENSG00000000248",
+    "GENE250": "ENSG00000000249",
+    "GENE252": "ENSG00000000251",
+    "GENE254": "ENSG00000000253",
+    "GENE255": "ENSG00000000254",
+    "GENE256": "ENSG00000000255",
+    "GENE258": "ENSG00000000257",
+    "GENE259": "ENSG00000000258"
+  },
+  "fetched_at": "2026-01-01T00:00:00+00:00",
+  "gene_type_scores": {
+    "GENE002": {
+      "animal_model": 0.1802,
+      "drug": 0.1069,
+      "expression": 0.0758,
+      "genetics": 0.1544,
+      "literature": 0.2734,
+      "pathway": 0.0597
+    },
+    "GENE003": {
+      "animal_model": 0.1505,
+      "drug": 0.1171,
+      "expression": 0.0247,
+      "genetics": 0.0958,
+      "literature": 0.1863,
+      "pathway": 0.1466
+    },
+    "GENE004": {
+      "animal_model": 0.1546,
+      "drug": 0.1443,
+      "expression": 0.1642,
+      "genetics": 0.2389,
+      "literature": 0.1788,
+      "pathway": 0.1477
+    },
+    "GENE006": {
+      "animal_model": 0.1649,
+      "drug": 0.1707,
+      "expression": 0.1705,
+      "genetics": 0.2598,
+      "literature": 0.1961,
+      "pathway": 0.176
+    },
+    "GENE007": {
+      "animal_model": 0.0777,
+      "drug": 0.0538,
+      "expression": 0.0492,
+      "genetics": 0.1651,
+      "literature": 0.2218,
+      "pathway": 0.0931
+    },
+    "GENE009": {
+      "animal_model": 0.0715,
+      "drug": 0.0453,
+      "expression": 0.1161,
+      "genetics": 0.0727,
+      "literature": 0.0964,
+      "pathway": 0.0728
+    },
+    "GENE011": {
+      "animal_model": 0.1285,
+      "drug": 0.1003,
+      "expression": 0.0846,
+      "genetics": 0.2282,
+      "literature": 0.0976,
+      "pathway": 0.0973
+    },
+    "GENE012": {
+      "animal_model": 0.3581,
+      "drug": 0.2868,
+      "expression": 0.2237,
+      "genetics": 0.4727,
+      "literature": 0.3099,
+      "pathway": 0.3187
+    },
+    "GENE013": {
+      "animal_model": 0.098,
+      "drug": 0.1973,
+      "expression": 0.1515,
+      "genetics": 0.1522,
+      "literature": 0.2867,
+      "pathway": 0.1279
+    },
+    "GENE015": {
+      "animal_model": 0.2367,
+      "drug": 0.2425,
+      "expression": 0.1665,
+      "genetics": 0.4344,
+      "literature": 0.3705,
+      "pathway": 0.217
+    },
+    "GENE016": {
+      "animal_model": 0.4238,
+      "drug": 0.3596,
+      "expression": 0.2219,
+      "genetics": 0.5945,
+      "literature": 0.3684,
+      "pathway": 0.3146
+    },
+    "GENE018": {
+      "animal_model": 0.2317,
+      "drug": 0.1895,
+      "expression": 0.0795,
+      "genetics": 0.2819,
+      "literature": 0.2355,
+      "pathway": 0.1457
+    },
+    "GENE020": {
+      "animal_model": 0.04,
+      "drug": 0.0802,
+      "expression": 0.0659,
+      "genetics": 0.0632,
+      "literature": 0.1611,
+      "pathway": 0.0461
+    },
+    "GENE021": {
+      "animal_model": 0.1714,
+      "drug": 0.1541,
+      "expression": 0.0794,
+      "genetics": 0.1391,
+      "literature": 0.4091,
+      "pathway": 0.1648
+    },
+    "GENE022": {
+      "animal_model": 0.0931,
+      "drug": 0.0472,
+      "expression": 0.0879,
+      "genetics": 0.0253,
+      "literature": 0.1751,
+      "pathway": 0.0911
+    },
+    "GENE024": {
+      "animal_model": 0.2804,
+      "drug": 0.2007,
+      "expression": 0.1199,
+      "genetics": 0.3658,
+      "literature": 0.1708,
+      "pathway": 0.2153
+    },
+    "GENE025": {
+      "animal_model": 0.2295,
+      "drug": 0.2694,
+      "expression": 0.0884,
+      "genetics": 0.289,
+      "literature": 0.2812,
+      "pathway": 0.1699
+    },
+    "GENE027": {
+      "animal_model": 0.0328,
+      "drug": 0.0396,
+      "expression": 0.0226,
+      "genetics": 0.0801,
+      "literature": 0.2766,
+      "pathway": 0.1026
+    },
+    "GENE029": {
+      "animal_model": 0.089,
+      "drug": 0.166,
+      "expression": 0.0382,
+      "genetics": 0.1715,
+      "literature": 0.2081,
+      "pathway": 0.1687
+    },
+    "GENE030": {
+      "animal_model": 0.3405,
+      "drug": 0.3036,
+      "expression": 0.1342,
+      "genetics": 0.3623,
+      "literature": 0.2709,
+      "pathway": 0.2021
+    },
+    "GENE031": {
+      "animal_model": 0.4217,
+      "drug": 0.4212,
+      "expression": 0.234,
+      "genetics": 0.7183,
+      "literature": 0.3722,
+      "pathway": 0.4259
+    },
+    "GENE033": {
+      "animal_model": 0.5592,
+      "drug": 0.5558,
+      "expression": 0.3125,
+      "genetics": 0.8919,
+      "literature": 0.5811,
+      "pathway": 0.5017
+    },
+    "GENE034": {
+      "animal_model": 0.0122,
+      "drug": 0.0907,
+      "expression": 0.0646,
+      "genetics": 0.0621,
+      "literature": 0.3256,
+      "pathway": 0.1171
+    },
+    "GENE036": {
+      "animal_model": 0.408,
+      "drug": 0.4748,
+      "expression": 0.2374,
+      "genetics": 0.6156,
+      "literature": 0.499,
+      "pathway": 0.4257
+    },
+    "GENE038": {
+      "animal_model": 0.0884,
+      "drug": 0.0509,
+      "expression": 0.0278,
+      "genetics": 0.0617,
+      "literature": 0.2805,
+      "pathway": 0.0438
+    },
+    "GENE039": {
+      "animal_model": 0.1698,
+      "drug": 0.0926,
+      "expression": 0.0823,
+      "genetics": 0.1602,
+      "literature": 0.165,
+      "pathway": 0.1644
+    },
+    "GENE040": {
+      "animal_model": 0.1093,
+      "drug": 0.0969,
+      "expression": 0.1112,
+      "genetics": 0.0853,
+      "literature": 0.1222,
+      "pathway": 0.0898
+    },
+    "GENE042": {
+      "animal_model": 0.1711,
+      "drug": 0.2017,
+      "expression": 0.1663,
+      "genetics": 0.3181,
+      "literature": 0.2573,
+      "pathway": 0.1335
+    },
+    "GENE043": {
+      "animal_model": 0.0609,
+      "drug": 0.0384,
+      "expression": 0.0863,
+      "genetics": 0.0309,
+      "literature": 0.1385,
+      "pathway": 0.0576
+    },
+    "GENE045": {
+      "animal_model": 0.1552,
+      "drug": 0.0893,
+      "expression": 0.0327,
+      "genetics": 0.1154,
+      "literature": 0.0874,
+      "pathway": 0.1756
+    },
+    "GENE047": {
+      "animal_model": 0.3076,
+      "drug": 0.3743,
+      "expression": 0.198,
+      "genetics": 0.4869,
+      "literature": 0.4334,
+      "pathway": 0.303
+    },
+    "GENE048": {
+      "animal_model": 0.2952,
+      "drug": 0.356,
+      "expression": 0.2389,
+      "genetics": 0.5059,
+      "literature": 0.3175,
+      "pathway": 0.3063
+    },
+    "GENE049": {
+      "animal_model": 0.1127,
+      "drug": 0.0944,
+      "expression": 0.0362,
+      "genetics": 0.103,
+      "literature": 0.3574,
+      "pathway": 0.0235
+    },
+    "GENE051": {
+      "animal_model": 0.1091,
+      "drug": 0.1648,
+      "expression": 0.1212,
+      "genetics": 0.2088,
+      "literature": 0.396,
+      "pathway": 0.097
+    },
+    "GENE052": {
+      "animal_model": 0.126,
+      "drug": 0.1167,
+      "expression": 0.1228,
+      "genetics": 0.1225,
+      "literature": 0.2743,
+      "pathway": 0.0701
+    },
+    "GENE054": {
+      "animal_model": 0.2038,
+      "drug": 0.2525,
+      "expression": 0.1897,
+      "genetics": 0.368,
+      "literature": 0.2192,
+      "pathway": 0.1966
+    },
+    "GENE056": {
+      "animal_model": 0.16,
+      "drug": 0.1648,
+      "expression": 0.0902,
+      "genetics": 0.3224,
+      "literature": 0.1385,
+      "pathway": 0.1801
+    },
+    "GENE057": {
+      "animal_model": 0.1169,
+      "drug": 0.0888,
+      "expression": 0.0303,
+      "genetics": 0.1886,
+      "literature": 0.3331,
+      "pathway": 0.1548
+    },
+    "GENE058": {
+      "animal_model": 0.1332,
+      "drug": 0.1135,
+      "expression": 0.066,
+      "genetics": 0.1144,
+      "literature": 0.3069,
+      "pathway": 0.0685
+    },
+    "GENE060": {
+      "animal_model": 0.2045,
+      "drug": 0.2141,
+      "expression": 0.1415,
+      "genetics": 0.3358,
+      "literature": 0.2076,
+      "pathway": 0.2266
+    },
+    "GENE061": {
+      "animal_model": 0.1417,
+      "drug": 0.1226,
+      "expression": 0.1396,
+      "genetics": 0.2206,
+      "literature": 0.4163,
+      "pathway": 0.1589
+    },
+    "GENE063": {
+      "animal_model": 0.1065,
+      "drug": 0.056,
+      "expression": 0.0953,
+      "genetics": 0.1566,
+      "literature": 0.3699,
+      "pathway": 0.0756
+    },
+    "GENE065": {
+      "animal_model": 0.0885,
+      "drug": 0.0707,
+      "expression": 0.122,
+      "genetics": 0.095,
+      "literature": 0.2835,
+      "pathway": 0.0318
+    },
+    "GENE066": {
+      "animal_model": 0.1042,
+      "drug": 0.1359,
+      "expression": 0.0954,
+      "genetics": 0.1322,
+      "literature": 0.286,
+      "pathway": 0.0963
+    },
+    "GENE067": {
+      "animal_model": 0.014,
+      "drug": 0.0242,
+      "expression": 0.0669,
+      "genetics": 0.1108,
+      "literature": 0.1045,
+      "pathway": 0.0156
+    },
+    "GENE069": {
+      "animal_model": 0.0874,
+      "drug": 0.056,
+      "expression": 0.0782,
+      "genetics": 0.0986,
+      "literature": 0.076,
+      "pathway": 0.0483
+    },
+    "GENE070": {
+      "animal_model": 0.1159,
+      "drug": 0.0398,
+      "expression": 0.0225,
+      "genetics": 0.0956,
+      "literature": 0.2186,
+      "pathway": 0.0774
+    },
+    "GENE072": {
+      "animal_model": 0.0773,
+      "drug": 0.0705,
+      "expression": 0.1124,
+      "genetics": 0.2066,
+      "literature": 0.183,
+      "pathway": 0.0587
+    },
+    "GENE074": {
+      "animal_model": 0.1258,
+      "drug": 0.1487,
+      "expression": 0.0533,
+      "genetics": 0.2183,
+      "literature": 0.1796,
+      "pathway": 0.1595
+    },
+    "GENE075": {
+      "animal_model": 0.0747,
+      "drug": 0.0715,
+      "expression": 0.0361,
+      "genetics": 0.0258,
+      "literature": 0.3575,
+      "pathway": 0.085
+    },
+    "GENE076": {
+      "animal_model": 0.2169,
+      "drug": 0.1928,
+      "expression": 0.1614,
+      "genetics": 0.3036,
+      "literature": 0.2448,
+      "pathway": 0.1226
+    },
+    "GENE078": {
+      "animal_model": 0.0536,
+      "drug": 0.1475,
+      "expression": 0.0668,
+      "genetics": 0.0895,
+      "literature": 0.3485,
+      "pathway": 0.1281
+    },
+    "GENE079": {
+      "animal_model": 0.071,
+      "drug": 0.0524,
+      "expression": 0.1148,
+      "genetics": 0.1284,
+      "literature": 0.2704,
+      "pathway": 0.0467
+    },
+    "GENE081": {
+      "animal_model": 0.1865,
+      "drug": 0.1441,
+      "expression": 0.1109,
+      "genetics": 0.2404,
+      "literature": 0.1323,
+      "pathway": 0.0876
+    },
+    "GENE083": {
+      "animal_model": 0.0979,
+      "drug": 0.0998,
+      "expression": 0.0976,
+      "genetics": 0.0863,
+      "literature": 0.3713,
+      "pathway": 0.073
+    },
+    "GENE084": {
+      "animal_model": 0.3439,
+      "drug": 0.3362,
+      "expression": 0.1104,
+      "genetics": 0.4835,
+      "literature": 0.3942,
+      "pathway": 0.2368
+    },
+    "GENE085": {
+      "animal_model": 0.3181,
+      "drug": 0.3034,
+      "expression": 0.2342,
+      "genetics": 0.4842,
+      "literature": 0.3637,
+      "pathway": 0.3263
+    },
+    "GENE087": {
+      "animal_model": 0.4318,
+      "drug": 0.3717,
+      "expression": 0.2208,
+      "genetics": 0.6063,
+      "literature": 0.3173,
+      "pathway": 0.2746
+    },
+    "GENE088": {
+      "animal_model": 0.2314,
+      "drug": 0.1942,
+      "expression": 0.1292,
+      "genetics": 0.3124,
+      "literature": 0.262,
+      "pathway": 0.2107
+    },
+    "GENE090": {
+      "animal_model": 0.0177,
+      "drug": 0.0697,
+      "expression": 0.0025,
+      "genetics": 0.0404,
+      "literature": 0.0612,
+      "pathway": 0.0553
+    },
+    "GENE092": {
+      "animal_model": 0.1471,
+      "drug": 0.065,
+      "expression": 0.0747,
+      "genetics": 0.0826,
+      "literature": 0.2271,
+      "pathway": 0.0578
+    },
+    "GENE093": {
+      "animal_model": 0.1341,
+      "drug": 0.0621,
+      "expression": 0.1189,
+      "genetics": 0.1569,
+      "literature": 0.262,
+      "pathway": 0.1521
+    },
+    "GENE094": {
+      "animal_model": 0.1044,
+      "drug": 0.0466,
+      "expression": 0.1106,
+      "genetics": 0.1153,
+      "literature": 0.1367,
+      "pathway": 0.1231
+    },
+    "GENE096": {
+      "animal_model": 0.1328,
+      "drug": 0.1534,
+      "expression": 0.084,
+      "genetics": 0.2189,
+      "literature": 0.1209,
+      "pathway": 0.1416
+    },
+    "GENE097": {
+      "animal_model": 0.0271,
+      "drug": 0.1294,
+      "expression": 0.049,
+      "genetics": 0.0744,
+      "literature": 0.2063,
+      "pathway": 0.038
+    },
+    "GENE099": {
+      "animal_model": 0.008,
+      "drug": 0.1046,
+      "expression": 0.0535,
+      "genetics": 0.0544,
+      "literature": 0.1271,
+      "pathway": 0.0683
+    },
+    "GENE101": {
+      "animal_model": 0.1341,
+      "drug": 0.1011,
+      "expression": 0.0953,
+      "genetics": 0.1863,
+      "literature": 0.3881,
+      "pathway": 0.1649
+    },
+    "GENE102": {
+      "animal_model": 0.1054,
+      "drug": 0.0227,
+      "expression": 0.1191,
+      "genetics": 0.0716,
+      "literature": 0.1646,
+      "pathway": 0.0439
+    },
+    "GENE103": {
+      "animal_model": 0.0331,
+      "drug": 0.0591,
+      "expression": 0.0335,
+      "genetics": 0.1094,
+      "literature": 0.096,
+      "pathway": 0.0317
+    },
+    "GENE105": {
+      "animal_model": 0.0562,
+      "drug": 0.0587,
+      "expression": 0.0388,
+      "genetics": 0.0983,
+      "literature": 0.265,
+      "pathway": 0.099
+    },
+    "GENE106": {
+      "animal_model": 0.106,
+      "drug": 0.2052,
+      "expression": 0.0503,
+      "genetics": 0.2106,
+      "literature": 0.2528,
+      "pathway": 0.1705
+    },
+    "GENE108": {
+      "animal_model": 0.0944,
+      "drug": 0.0689,
+      "expression": 0.0788,
+      "genetics": 0.112,
+      "literature": 0.1591,
+      "pathway": 0.1144
+    },
+    "GENE110": {
+      "animal_model": 0.1039,
+      "drug": 0.0774,
+      "expression": 0.0536,
+      "genetics": 0.126,
+      "literature": 0.0662,
+      "pathway": 0.0304
+    },
+    "GENE111": {
+      "animal_model": 0.1408,
+      "drug": 0.1325,
+      "expression": 0.0641,
+      "genetics": 0.1848,
+      "literature": 0.41,
+      "pathway": 0.1155
+    },
+    "GENE112": {
+      "animal_model": 0.1092,
+      "drug": 0.0988,
+      "expression": 0.1287,
+      "genetics": 0.2159,
+      "literature": 0.1189,
+      "pathway": 0.1148
+    },
+    "GENE114": {
+      "animal_model": 0.1419,
+      "drug": 0.0738,
+      "expression": 0.0794,
+      "genetics": 0.1951,
+      "literature": 0.2422,
+      "pathway": 0.1162
+    },
+    "GENE115": {
+      "animal_model": 0.0809,
+      "drug": 0.0835,
+      "expression": 0.0508,
+      "genetics": 0.1566,
+      "literature": 0.3259,
+      "pathway": 0.1212
+    },
+    "GENE117": {
+      "animal_model": 0.0648,
+      "drug": 0.181,
+      "expression": 0.0623,
+      "genetics": 0.1528,
+      "literature": 0.1638,
+      "pathway": 0.1149
+    },
+    "GENE119": {
+      "animal_model": 0.0416,
+      "drug": 0.1094,
+      "expression": 0.0575,
+      "genetics": 0.1405,
+      "literature": 0.3359,
+      "pathway": 0.1439
+    },
+    "GENE120": {
+      "animal_model": 0.0443,
+      "drug": 0.0165,
+      "expression": 0.0604,
+      "genetics": 0.0079,
+      "literature": 0.3396,
+      "pathway": 0.067
+    },
+    "GENE121": {
+      "animal_model": 0.1007,
+      "drug": 0.0929,
+      "expression": 0.1431,
+      "genetics": 0.1992,
+      "literature": 0.3327,
+      "pathway": 0.078
+    },
+    "GENE123": {
+      "animal_model": 0.3882,
+      "drug": 0.3397,
+      "expression": 0.1685,
+      "genetics": 0.5087,
+      "literature": 0.3341,
+      "pathway": 0.325
+    },
+    "GENE124": {
+      "animal_model": 0.0779,
+      "drug": 0.0982,
+      "expression": 0.0821,
+      "genetics": 0.0236,
+      "literature": 0.0848,
+      "pathway": 0.0565
+    },
+    "GENE126": {
+      "animal_model": 0.1825,
+      "drug": 0.2407,
+      "expression": 0.1345,
+      "genetics": 0.315,
+      "literature": 0.2483,
+      "pathway": 0.1336
+    },
+    "GENE128": {
+      "animal_model": 0.1003,
+      "drug": 0.0564,
+      "expression": 0.0917,
+      "genetics": 0.1405,
+      "literature": 0.1125,
+      "pathway": 0.062
+    },
+    "GENE129": {
+      "animal_model": 0.0576,
+      "drug": 0.1214,
+      "expression": 0.0402,
+      "genetics": 0.1319,
+      "literature": 0.1778,
+      "pathway": 0.1048
+    },
+    "GENE130": {
+      "animal_model": 0.2032,
+      "drug": 0.2041,
+      "expression": 0.1261,
+      "genetics": 0.1697,
+      "literature": 0.3354,
+      "pathway": 0.1513
+    },
+    "GENE132": {
+      "animal_model": 0.1629,
+      "drug": 0.1495,
+      "expression": 0.1134,
+      "genetics": 0.1105,
+      "literature": 0.3996,
+      "pathway": 0.1392
+    },
+    "GENE133": {
+      "animal_model": 0.1618,
+      "drug": 0.0764,
+      "expression": 0.1503,
+      "genetics": 0.127,
+      "literature": 0.1024,
+      "pathway": 0.0613
+    },
+    "GENE135": {
+      "animal_model": 0.1196,
+      "drug": 0.034,
+      "expression": 0.0171,
+      "genetics": 0.1032,
+      "literature": 0.2728,
+      "pathway": 0.052
+    },
+    "GENE137": {
+      "animal_model": 0.4668,
+      "drug": 0.4429,
+      "expression": 0.2946,
+      "genetics": 0.7066,
+      "literature": 0.4646,
+      "pathway": 0.4419
+    },
+    "GENE138": {
+      "animal_model": 0.1864,
+      "drug": 0.1405,
+      "expression": 0.177,
+      "genetics": 0.2,
+      "literature": 0.1335,
+      "pathway": 0.1426
+    },
+    "GENE139": {
+      "animal_model": 0.0361,
+      "drug": 0.0741,
+      "expression": 0.0925,
+      "genetics": 0.0565,
+      "literature": 0.2234,
+      "pathway": 0.0363
+    },
+    "GENE141": {
+      "animal_model": 0.2137,
+      "drug": 0.1854,
+      "expression": 0.0992,
+      "genetics": 0.3048,
+      "literature": 0.4296,
+      "pathway": 0.1288
+    },
+    "GENE142": {
+      "animal_model": 0.1149,
+      "drug": 0.0694,
+      "expression": 0.0301,
+      "genetics": 0.1061,
+      "literature": 0.188,
+      "pathway": 0.0445
+    },
+    "GENE144": {
+      "animal_model": 0.1915,
+      "drug": 0.0749,
+      "expression": 0.1118,
+      "genetics": 0.1964,
+      "literature": 0.2903,
+      "pathway": 0.1255
+    },
+    "GENE146": {
+      "animal_model": 0.3768,
+      "drug": 0.4166,
+      "expression": 0.1884,
+      "genetics": 0.5587,
+      "literature": 0.4063,
+      "pathway": 0.3207
+    },
+    "GENE147": {
+      "animal_model": 0.1618,
+      "drug": 0.1057,
+      "expression": 0.0409,
+      "genetics": 0.2566,
+      "literature": 0.1578,
+      "pathway": 0.1454
+    },
+    "GENE148": {
+      "animal_model": 0.084,
+      "drug": 0.1069,
+      "expression": 0.0494,
+      "genetics": 0.1444,
+      "literature": 0.3875,
+      "pathway": 0.165
+    },
+    "GENE150": {
+      "animal_model": 0.2845,
+      "drug": 0.2339,
+      "expression": 0.1545,
+      "genetics": 0.3789,
+      "literature": 0.1524,
+      "pathway": 0.1974
+    },
+    "GENE151": {
+      "animal_model": 0.4502,
+      "drug": 0.466,
+      "expression": 0.3034,
+      "genetics": 0.6967,
+      "literature": 0.5631,
+      "pathway": 0.3593
+    },
+    "GENE153": {
+      "animal_model": 0.3318,
+      "drug": 0.3138,
+      "expression": 0.1947,
+      "genetics": 0.4752,
+      "literature": 0.4241,
+      "pathway": 0.2994
+    },
+    "GENE155": {
+      "animal_model": 0.104,
+      "drug": 0.1203,
+      "expression": 0.1303,
+      "genetics": 0.1041,
+      "literature": 0.2609,
+      "pathway": 0.0951
+    },
+    "GENE156": {
+      "animal_model": 0.1298,
+      "drug": 0.1182,
+      "expression": 0.1094,
+      "genetics": 0.2676,
+      "literature": 0.3615,
+      "pathway": 0.1456
+    },
+    "GENE157": {
+      "animal_model": 0.0369,
+      "drug": 0.1304,
+      "expression": 0.0913,
+      "genetics": 0.1043,
+      "literature": 0.3885,
+      "pathway": 0.1253
+    },
+    "GENE159": {
+      "animal_model": 0.1472,
+      "drug": 0.2043,
+      "expression": 0.0622,
+      "genetics": 0.2595,
+      "literature": 0.1688,
+      "pathway": 0.1039
+    },
+    "GENE160": {
+      "animal_model": 0.3733,
+      "drug": 0.3819,
+      "expression": 0.1557,
+      "genetics": 0.5479,
+      "literature": 0.4915,
+      "pathway": 0.3088
+    },
+    "GENE162": {
+      "animal_model": 0.0398,
+      "drug": 0.1071,
+      "expression": 0.0231,
+      "genetics": 0.1085,
+      "literature": 0.2519,
+      "pathway": 0.0909
+    },
+    "GENE164": {
+      "animal_model": 0.0291,
+      "drug": 0.0485,
+      "expression": 0.0056,
+      "genetics": 0.0577,
+      "literature": 0.0517,
+      "pathway": 0.0304
+    },
+    "GENE165": {
+      "animal_model": 0.1239,
+      "drug": 0.0537,
+      "expression": 0.0385,
+      "genetics": 0.071,
+      "literature": 0.2576,
+      "pathway": 0.1171
+    },
+    "GENE166": {
+      "animal_model": 0.1022,
+      "drug": 0.1089,
+      "expression": 0.1005,
+      "genetics": 0.1849,
+      "literature": 0.2257,
+      "pathway": 0.0921
+    },
+    "GENE168": {
+      "animal_model": 0.09,
+      "drug": 0.056,
+      "expression": 0.0871,
+      "genetics": 0.0807,
+      "literature": 0.1713,
+      "pathway": 0.1141
+    },
+    "GENE169": {
+      "animal_model": 0.0389,
+      "drug": 0.0534,
+      "expression": 0.0992,
+      "genetics": 0.1635,
+      "literature": 0.15,
+      "pathway": 0.0695
+    },
+    "GENE171": {
+      "animal_model": 0.1306,
+      "drug": 0.105,
+      "expression": 0.0866,
+      "genetics": 0.1551,
+      "literature": 0.0772,
+      "pathway": 0.1569
+    },
+    "GENE173": {
+      "animal_model": 0.0611,
+      "drug": 0.0576,
+      "expression": 0.0508,
+      "genetics": 0.1041,
+      "literature": 0.1914,
+      "pathway": 0.0586
+    },
+    "GENE174": {
+      "animal_model": 0.069,
+      "drug": 0.1015,
+      "expression": 0.09,
+      "genetics": 0.0843,
+      "literature": 0.3039,
+      "pathway": 0.0503
+    },
+    "GENE175": {
+      "animal_model": 0.0152,
+      "drug": 0.097,
+      "expression": 0.0286,
+      "genetics": 0.0213,
+      "literature": 0.0986,
+      "pathway": 0.013
+    },
+    "GENE177": {
+      "animal_model": 0.0874,
+      "drug": 0.0722,
+      "expression": 0.0838,
+      "genetics": 0.0135,
+      "literature": 0.0661,
+      "pathway": 0.089
+    },
+    "GENE178": {
+      "animal_model": 0.064,
+      "drug": 0.0719,
+      "expression": 0.0989,
+      "genetics": 0.1226,
+      "literature": 0.1638,
+      "pathway": 0.1062
+    },
+    "GENE180": {
+      "animal_model": 0.0667,
+      "drug": 0.1186,
+      "expression": 0.0315,
+      "genetics": 0.033,
+      "literature": 0.3777,
+      "pathway": 0.0376
+    },
+    "GENE182": {
+      "animal_model": 0.1857,
+      "drug": 0.2052,
+      "expression": 0.1069,
+      "genetics": 0.2454,
+      "literature": 0.4332,
+      "pathway": 0.2307
+    },
+    "GENE183": {
+      "animal_model": 0.0824,
+      "drug": 0.0447,
+      "expression": 0.0623,
+      "genetics": 0.1239,
+      "literature": 0.2334,
+      "pathway": 0.0872
+    },
+    "GENE184": {
+      "animal_model": 0.3532,
+      "drug": 0.3281,
+      "expression": 0.205,
+      "genetics": 0.5803,
+      "literature": 0.3998,
+      "pathway": 0.2549
+    },
+    "GENE186": {
+      "animal_model": 0.306,
+      "drug": 0.2738,
+      "expression": 0.2023,
+      "genetics": 0.3959,
+      "literature": 0.4588,
+      "pathway": 0.2272
+    },
+    "GENE187": {
+      "animal_model": 0.1358,
+      "drug": 0.2421,
+      "expression": 0.1644,
+      "genetics": 0.2542,
+      "literature": 0.3811,
+      "pathway": 0.1132
+    },
+    "GENE189": {
+      "animal_model": 0.3993,
+      "drug": 0.3482,
+      "expression": 0.176,
+      "genetics": 0.5963,
+      "literature": 0.5066,
+      "pathway": 0.3885
+    },
+    "GENE191": {
+      "animal_model": 0.178,
+      "drug": 0.2342,
+      "expression": 0.095,
+      "genetics": 0.2722,
+      "literature": 0.4735,
+      "pathway": 0.226
+    },
+    "GENE192": {
+      "animal_model": 0.1144,
+      "drug": 0.0171,
+      "expression": 0.1167,
+      "genetics": 0.1029,
+      "literature": 0.1013,
+      "pathway": 0.0544
+    },
+    "GENE193": {
+      "animal_model": 0.1288,
+      "drug": 0.1194,
+      "expression": 0.1293,
+      "genetics": 0.1627,
+      "literature": 0.1804,
+      "pathway": 0.0875
+    },
+    "GENE195": {
+      "animal_model": 0.0971,
+      "drug": 0.1171,
+      "expression": 0.0543,
+      "genetics": 0.1891,
+      "literature": 0.3706,
+      "pathway": 0.1739
+    },
+    "GENE196": {
+      "animal_model": 0.2474,
+      "drug": 0.2995,
+      "expression": 0.0866,
+      "genetics": 0.3281,
+      "literature": 0.2729,
+      "pathway": 0.1944
+    },
+    "GENE198": {
+      "animal_model": 0.0197,
+      "drug": 0.0608,
+      "expression": 0.0539,
+      "genetics": 0.0952,
+      "literature": 0.3295,
+      "pathway": 0.0856
+    },
+    "GENE200": {
+      "animal_model": 0.2171,
+      "drug": 0.2771,
+      "expression": 0.1348,
+      "genetics": 0.3562,
+      "literature": 0.4427,
+      "pathway": 0.1638
+    },
+    "GENE201": {
+      "animal_model": 0.4246,
+      "drug": 0.419,
+      "expression": 0.2891,
+      "genetics": 0.6884,
+      "literature": 0.3033,
+      "pathway": 0.4054
+    },
+    "GENE202": {
+      "animal_model": 0.1716,
+      "drug": 0.1627,
+      "expression": 0.0525,
+      "genetics": 0.1873,
+      "literature": 0.3153,
+      "pathway": 0.1564
+    },
+    "GENE204": {
+      "animal_model": 0.1686,
+      "drug": 0.1928,
+      "expression": 0.0421,
+      "genetics": 0.2016,
+      "literature": 0.2119,
+      "pathway": 0.105
+    },
+    "GENE205": {
+      "animal_model": 0.1243,
+      "drug": 0.1243,
+      "expression": 0.0219,
+      "genetics": 0.0818,
+      "literature": 0.2738,
+      "pathway": 0.0915
+    },
+    "GENE207": {
+      "animal_model": 0.2502,
+      "drug": 0.2362,
+      "expression": 0.1438,
+      "genetics": 0.2836,
+      "literature": 0.1997,
+      "pathway": 0.1597
+    },
+    "GENE209": {
+      "animal_model": 0.1836,
+      "drug": 0.1274,
+      "expression": 0.0572,
+      "genetics": 0.2071,
+      "literature": 0.1989,
+      "pathway": 0.0879
+    },
+    "GENE210": {
+      "animal_model": 0.3855,
+      "drug": 0.3788,
+      "expression": 0.1573,
+      "genetics": 0.5143,
+      "literature": 0.4199,
+      "pathway": 0.3683
+    },
+    "GENE211": {
+      "animal_model": 0.1113,
+      "drug": 0.119,
+      "expression": 0.0928,
+      "genetics": 0.1168,
+      "literature": 0.1465,
+      "pathway": 0.1122
+    },
+    "GENE213": {
+      "animal_model": 0.1311,
+      "drug": 0.0331,
+      "expression": 0.1127,
+      "genetics": 0.0564,
+      "literature": 0.0268,
+      "pathway": 0.0748
+    },
+    "GENE214": {
+      "animal_model": 0.0981,
+      "drug": 0.1614,
+      "expression": 0.1129,
+      "genetics": 0.1711,
+      "literature": 0.1587,
+      "pathway": 0.0819
+    },
+    "GENE216": {
+      "animal_model": 0.0841,
+      "drug": 0.1033,
+      "expression": 0.0605,
+      "genetics": 0.1488,
+      "literature": 0.2696,
+      "pathway": 0.1527
+    },
+    "GENE218": {
+      "animal_model": 0.0943,
+      "drug": 0.1835,
+      "expression": 0.0481,
+      "genetics": 0.2234,
+      "literature": 0.4633,
+      "pathway": 0.1026
+    },
+    "GENE219": {
+      "animal_model": 0.0959,
+      "drug": 0.1776,
+      "expression": 0.0841,
+      "genetics": 0.244,
+      "literature": 0.4377,
+      "pathway": 0.1747
+    },
+    "GENE220": {
+      "animal_model": 0.1956,
+      "drug": 0.2269,
+      "expression": 0.0912,
+      "genetics": 0.3231,
+      "literature": 0.3851,
+      "pathway": 0.1746
+    },
+    "GENE222": {
+      "animal_model": 0.1138,
+      "drug": 0.0357,
+      "expression": 0.0349,
+      "genetics": 0.0529,
+      "literature": 0.3723,
+      "pathway": 0.0551
+    },
+    "GENE223": {
+      "animal_model": 0.106,
+      "drug": 0.0906,
+      "expression": 0.123,
+      "genetics": 0.1414,
+      "literature": 0.1286,
+      "pathway": 0.1155
+    },
+    "GENE225": {
+      "animal_model": 0.1532,
+      "drug": 0.1669,
+      "expression": 0.119,
+      "genetics": 0.1231,
+      "literature": 0.4465,
+      "pathway": 0.1012
+    },
+    "GENE227": {
+      "animal_model": 0.1562,
+      "drug": 0.0762,
+      "expression": 0.1397,
+      "genetics": 0.1921,
+      "literature": 0.3409,
+      "pathway": 0.1577
+    },
+    "GENE228": {
+      "animal_model": 0.1061,
+      "drug": 0.0945,
+      "expression": 0.1133,
+      "genetics": 0.1643,
+      "literature": 0.3978,
+      "pathway": 0.1391
+    },
+    "GENE229": {
+      "animal_model": 0.1095,
+      "drug": 0.0996,
+      "expression": 0.1335,
+      "genetics": 0.2487,
+      "literature": 0.146,
+      "pathway": 0.1004
+    },
+    "GENE231": {
+      "animal_model": 0.1945,
+      "drug": 0.1288,
+      "expression": 0.1546,
+      "genetics": 0.2143,
+      "literature": 0.2209,
+      "pathway": 0.1644
+    },
+    "GENE232": {
+      "animal_model": 0.204,
+      "drug": 0.1856,
+      "expression": 0.1462,
+      "genetics": 0.2732,
+      "literature": 0.349,
+      "pathway": 0.1336
+    },
+    "GENE234": {
+      "animal_model": 0.0423,
+      "drug": 0.1004,
+      "expression": 0.1083,
+      "genetics": 0.1452,
+      "literature": 0.071,
+      "pathway": 0.0243
+    },
+    "GENE236": {
+      "animal_model": 0.2637,
+      "drug": 0.2126,
+      "expression": 0.1287,
+      "genetics": 0.3235,
+      "literature": 0.262,
+      "pathway": 0.1731
+    },
+    "GENE237": {
+      "animal_model": 0.1683,
+      "drug": 0.1065,
+      "expression": 0.065,
+      "genetics": 0.121,
+      "literature": 0.3006,
+      "pathway": 0.1426
+    },
+    "GENE238": {
+      "animal_model": 0.0496,
+      "drug": 0.0881,
+      "expression": 0.1015,
+      "genetics": 0.0145,
+      "literature": 0.3925,
+      "pathway": 0.0271
+    },
+    "GENE240": {
+      "animal_model": 0.0764,
+      "drug": 0.1223,
+      "expression": 0.1143,
+      "genetics": 0.0973,
+      "literature": 0.414,
+      "pathway": 0.0601
+    },
+    "GENE241": {
+      "animal_model": 0.2222,
+      "drug": 0.1315,
+      "expression": 0.0689,
+      "genetics": 0.2678,
+      "literature": 0.1468,
+      "pathway": 0.1523
+    },
+    "GENE243": {
+      "animal_model": 0.0784,
+      "drug": 0.1139,
+      "expression": 0.0499,
+      "genetics": 0.056,
+      "literature": 0.3758,
+      "pathway": 0.0258
+    },
+    "GENE245": {
+      "animal_model": 0.1276,
+      "drug": 0.1241,
+      "expression": 0.0857,
+      "genetics": 0.1268,
+      "literature": 0.2361,
+      "pathway": 0.0195
+    },
+    "GENE246": {
+      "animal_model": 0.1267,
+      "drug": 0.1462,
+      "expression": 0.0755,
+      "genetics": 0.1792,
+      "literature": 0.4125,
+      "pathway": 0.1174
+    },
+    "GENE247": {
+      "animal_model": 0.1021,
+      "drug": 0.1291,
+      "expression": 0.1056,
+      "genetics": 0.0254,
+      "literature": 0.2406,
+      "pathway": 0.0918
+    },
+    "GENE249": {
+      "animal_model": 0.153,
+      "drug": 0.1335,
+      "expression": 0.0251,
+      "genetics": 0.1611,
+      "literature": 0.4203,
+      "pathway": 0.0767
+    },
+    "GENE250": {
+      "animal_model": 0.0367,
+      "drug": 0.0735,
+      "expression": 0.007,
+      "genetics": 0.0739,
+      "literature": 0.2723,
+      "pathway": 0.0495
+    },
+    "GENE252": {
+      "animal_model": 0.4121,
+      "drug": 0.3659,
+      "expression": 0.2009,
+      "genetics": 0.5768,
+      "literature": 0.5196,
+      "pathway": 0.3882
+    },
+    "GENE254": {
+      "animal_model": 0.2158,
+      "drug": 0.2322,
+      "expression": 0.1359,
+      "genetics": 0.2655,
+      "literature": 0.3522,
+      "pathway": 0.1288
+    },
+    "GENE255": {
+      "animal_model": 0.372,
+      "drug": 0.3932,
+      "expression": 0.2217,
+      "genetics": 0.56,
+      "literature": 0.514,
+      "pathway": 0.3929
+    },
+    "GENE256": {
+      "animal_model": 0.1788,
+      "drug": 0.148,
+      "expression": 0.1103,
+      "genetics": 0.2546,
+      "literature": 0.1617,
+      "pathway": 0.2319
+    },
+    "GENE258": {
+      "animal_model": 0.502,
+      "drug": 0.4794,
+      "expression": 0.2598,
+      "genetics": 0.7429,
+      "literature": 0.4495,
+      "pathway": 0.3859
+    },
+    "GENE259": {
+      "animal_model": 0.5637,
+      "drug": 0.5022,
+      "expression": 0.3228,
+      "genetics": 0.7512,
+      "literature": 0.5494,
+      "pathway": 0.4388
+    }
+  },
+  "n_rows": 173,
+  "schema_version": 1,
+  "source": "synthetic demo data (not Open Targets)",
+  "total_associations": 173
+}
