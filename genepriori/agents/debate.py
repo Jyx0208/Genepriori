@@ -21,7 +21,7 @@ from ..pipeline.evaluation import EvaluationResult, evaluate_evidence
 from .base import DebateContext, Proposal, ScoredClaim
 from .governor import Governor, GovernorConfig
 from .heuristic import default_agents
-from .llm import LLMAgent, LLMClient
+from .llm import LLMAgent, LLMClient, resolve_api_key, resolve_mode
 
 LOG = logging.getLogger(__name__)
 
@@ -89,17 +89,33 @@ def run_debate(
     cache: Optional[Cache] = None,
     rounds: int = 3,
     budget: int = 12,
-    mode: str = "heuristic",
+    mode: str = "auto",
     holdout: str = "drug",
     offline: bool = False,
     refresh: bool = False,
     client=None,
     llm_client: Optional[LLMClient] = None,
+    llm_api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Run the full debate for one holdout and return a JSON-serialisable report."""
+    """Run the full debate for one holdout and return a JSON-serialisable report.
+
+    ``mode="auto"`` uses the LLM agents when an API key is available and the
+    heuristic agents otherwise. ``mode="llm"`` fails fast when no key is found.
+    """
     config = config or RunConfig()
     cache = cache if cache is not None else Cache()
     base = config.with_holdout(holdout)
+
+    requested_mode = (mode or "auto").strip().lower()
+    api_key = resolve_api_key(base.llm, explicit=llm_api_key)
+    resolved_mode = resolve_mode(requested_mode, api_key)
+    if resolved_mode == "llm" and not api_key:
+        raise ValueError(
+            "LLM debate requested but no API key found. Set DEEPSEEK_API_KEY "
+            "(or GENEPRIORI_LLM_API_KEY / OPENAI_API_KEY), add it to .env, "
+            "or run with --mode heuristic."
+        )
+
     governor = Governor(
         GovernorConfig(budget=budget, rounds=rounds, seed=config.evaluation.seed)
     )
@@ -136,9 +152,10 @@ def run_debate(
     }
 
     agents = default_agents()
-    if mode == "llm":
-        llm_client = llm_client or LLMClient()
-        agents = [
+    llm_agents: List[LLMAgent] = []
+    if resolved_mode == "llm":
+        llm_client = llm_client or LLMClient(base.llm, api_key=api_key)
+        llm_agents = [
             LLMAgent(
                 agent.name,
                 PERSONAS.get(agent.name, "You propose gene-prioritisation strategies."),
@@ -147,9 +164,11 @@ def run_debate(
             )
             for agent in agents
         ]
+        agents = list(llm_agents)
 
     leaderboard: List[ScoredClaim] = []
     decisions: List[Dict[str, Any]] = []
+    llm_errors: List[Dict[str, Any]] = []
     seen_fingerprints: set = set()
 
     for round_no in range(1, rounds + 1):
@@ -173,6 +192,15 @@ def run_debate(
                 proposals.extend(agent.propose(context))
             except Exception as exc:  # noqa: BLE001 - one agent must not stop the round
                 LOG.warning("agent %s failed in round %d: %s", agent.name, round_no, exc)
+                if isinstance(agent, LLMAgent):
+                    llm_errors.append(
+                        {"round": round_no, "agent": agent.name, "error": str(exc)}
+                    )
+        for agent in llm_agents:
+            if agent.last_error:
+                llm_errors.append(
+                    {"round": round_no, "agent": agent.name, "error": agent.last_error}
+                )
 
         audited: List[Proposal] = []
         for proposal in proposals:
@@ -269,7 +297,14 @@ def run_debate(
     best = max(accepted, key=lambda entry: entry.measured_auprc) if accepted else None
 
     return {
-        "mode": mode,
+        "mode": resolved_mode,
+        "mode_requested": requested_mode,
+        "llm": {
+            "enabled": resolved_mode == "llm",
+            "base_url": base.llm.base_url,
+            "model": base.llm.model,
+        },
+        "llm_errors": llm_errors,
         "holdout": holdout,
         "rounds": rounds,
         "budget": budget,

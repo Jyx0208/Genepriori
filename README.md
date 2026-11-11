@@ -31,8 +31,62 @@ genepriori --version
 genepriori doctor
 ```
 
-`genepriori doctor` checks Python, dependencies, the cache directory and
-network access. Everything else works offline once data is cached.
+`genepriori doctor` checks Python, dependencies, the cache directory, network
+access and the LLM configuration. Everything else works offline once data is
+cached.
+
+---
+
+## Configure DeepSeek
+
+The multi-agent debate runs with heuristic agents out of the box. To use the
+LLM agents, add a DeepSeek key (any OpenAI-compatible endpoint works).
+
+**Option A — `.env` file (recommended)**
+
+```bash
+cp .env.example .env
+# then edit .env:
+# DEEPSEEK_API_KEY=sk-...
+```
+
+The file is read from the working directory or from `~/.genepriori/.env`.
+`.env` is git-ignored.
+
+**Option B — environment variable**
+
+```bash
+export DEEPSEEK_API_KEY=sk-...          # macOS / Linux
+$env:DEEPSEEK_API_KEY="sk-..."          # Windows PowerShell
+```
+
+Accepted names, in priority order: `GENEPRIORI_LLM_API_KEY`,
+`DEEPSEEK_API_KEY`, `OPENAI_API_KEY`.
+
+**Option C — run configuration**
+
+```yaml
+llm:
+  base_url: https://api.deepseek.com/v1
+  model: deepseek-chat
+  api_key_env: DEEPSEEK_API_KEY
+```
+
+The key itself is never written to the configuration file.
+
+**Verify**
+
+```bash
+genepriori doctor
+```
+
+```
+llm   OK   deepseek-chat @ https://api.deepseek.com/v1 | key sk-a...1234
+```
+
+`genepriori debate` uses the LLM whenever a key is available (`--mode auto`),
+falls back to the heuristic agents when it is not, and `--mode llm` stops with
+a clear message if the key is missing.
 
 ---
 
@@ -199,21 +253,37 @@ Runs every variant on every selected disease and reports paired bootstrap
 deltas, win rates, sign tests and BH-adjusted p-values. `--diseases` accepts
 `oncology`, `registry` (all 19), a category, or a comma-separated list.
 
-### 7. Multi-agent debate (optional)
+### 7. Multi-agent debate
 
 ```bash
 genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both
 ```
 
-Four agents propose parameterised claims over three rounds; a Governor allocates
-the budget and accepts claims only under explicit statistical criteria. No API
-key needed. For the LLM variant:
+Four agents propose parameterised claims over three rounds: propose → audit →
+score/select → execute → accept/reject → feedback. A Governor allocates the
+budget (40% / 35% / remaining of 12 claims) and accepts a claim only when one
+of three criteria holds (majority rule, bootstrap CI above zero, or a strong
+consistent override). The LeakageAuditor is a hard gate before execution.
+
+Modes:
+
+| flag | behaviour |
+|---|---|
+| `--mode auto` (default) | LLM agents if `DEEPSEEK_API_KEY` is set, otherwise heuristic |
+| `--mode llm` | require the LLM; fail with instructions if no key |
+| `--mode heuristic` | never call an LLM |
+
+Override the endpoint per run:
 
 ```bash
-export GENEPRIORI_LLM_API_KEY=...        # or DEEPSEEK_API_KEY / OPENAI_API_KEY
-export GENEPRIORI_LLM_BASE_URL=https://api.deepseek.com/v1
-genepriori debate --mode llm
+genepriori debate --mode llm \
+    --llm-model deepseek-reasoner \
+    --llm-base-url https://api.deepseek.com/v1
 ```
+
+If an LLM call fails mid-debate, that agent falls back to its heuristic
+version, the error is recorded in `debate.json` under `llm_errors`, and the CLI
+prints a warning. The run always completes.
 
 ---
 
@@ -270,6 +340,9 @@ Global flags work before or after the subcommand: `--cache-dir`, `--offline`,
 
 **`No cached evidence ...`** — run `genepriori fetch --disease <id>` first, or
 drop `--offline`.
+
+**`no API key found`** — set `DEEPSEEK_API_KEY`, add it to `.env`, or run
+`--mode heuristic`. `genepriori doctor` shows whether a key is detected.
 
 **`Only N positives ... needs at least 5`** — lower `--positive-threshold` or
 `--folds`, or increase `--max-genes`.

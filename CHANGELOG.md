@@ -22,8 +22,12 @@ public API of the five existing modules is preserved.
   `fetch-ppi`, `rank`, `evaluate`, `benchmark`, `debate`, `config`.
 - **Multi-agent debate** (`genepriori/agents/`): four heuristic agents, a
   Governor with budget allocation and three acceptance criteria, a
-  three-round six-step workflow, and an optional OpenAI-compatible LLM mode
-  with heuristic fallback.
+  three-round six-step workflow, and an OpenAI-compatible LLM mode
+  (DeepSeek by default) with heuristic fallback.
+- **LLM configuration**: `llm:` block in run configurations, `.env` loading,
+  `DEEPSEEK_API_KEY` / `GENEPRIORI_LLM_API_KEY` / `OPENAI_API_KEY` resolution,
+  `--mode auto|llm|heuristic`, per-run `--llm-model` / `--llm-base-url`
+  overrides, and an LLM status line in `genepriori doctor`.
 - **Statistics**: paired bootstrap, exact binomial sign test and
   Benjamini–Hochberg FDR.
 - **Propagation**: `neighbor_voting`, heat diffusion (`hd`) and `ensemble`

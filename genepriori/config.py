@@ -156,12 +156,46 @@ class EvaluationConfig:
 
 
 @dataclass
+class LLMConfig:
+    """OpenAI-compatible chat endpoint used by the debate agents.
+
+    The API key itself is never stored here: ``api_key_env`` names the
+    environment variable to read (after ``GENEPRIORI_LLM_API_KEY`` and the
+    provider-specific fallbacks).
+    """
+
+    base_url: str = "https://api.deepseek.com/v1"
+    model: str = "deepseek-chat"
+    api_key_env: str = "DEEPSEEK_API_KEY"
+    temperature: float = 0.2
+    timeout: float = 120.0
+    max_retries: int = 2
+
+    def __post_init__(self) -> None:
+        self.base_url = (self.base_url or "").rstrip("/")
+        if not self.base_url.startswith(("http://", "https://")):
+            raise ValueError(
+                f"llm.base_url must start with http:// or https://, got {self.base_url!r}."
+            )
+        self.model = (self.model or "").strip()
+        if not self.model:
+            raise ValueError("llm.model must not be empty.")
+        if not 0.0 <= float(self.temperature) <= 2.0:
+            raise ValueError(f"llm.temperature must be in [0, 2], got {self.temperature}.")
+        if float(self.timeout) <= 0:
+            raise ValueError(f"llm.timeout must be positive, got {self.timeout}.")
+        if int(self.max_retries) < 0:
+            raise ValueError("llm.max_retries must be non-negative.")
+
+
+@dataclass
 class RunConfig:
     """Everything needed to reproduce a ranking run."""
 
     weights: Dict[str, float] = field(default_factory=lambda: dict(DEFAULT_WEIGHTS))
     network: NetworkConfig = field(default_factory=NetworkConfig)
     evaluation: EvaluationConfig = field(default_factory=EvaluationConfig)
+    llm: LLMConfig = field(default_factory=LLMConfig)
     max_genes: int = 2000
     page_size: int = 500
     string_version: str = "12.5"
@@ -193,21 +227,24 @@ class RunConfig:
         data = dict(payload or {})
         network_raw = data.pop("network", {}) or {}
         evaluation_raw = data.pop("evaluation", {}) or {}
+        llm_raw = data.pop("llm", {}) or {}
         weights_raw = data.pop("weights", None)
 
         network = _build(NetworkConfig, network_raw, "network")
         evaluation = _build(EvaluationConfig, evaluation_raw, "evaluation")
-        allowed = {f.name for f in fields(cls)} - {"weights", "network", "evaluation"}
+        llm = _build(LLMConfig, llm_raw, "llm")
+        allowed = {f.name for f in fields(cls)} - {"weights", "network", "evaluation", "llm"}
         unknown = set(data) - allowed
         if unknown:
             raise ValueError(
                 f"Unknown configuration key(s): {sorted(unknown)}. "
-                f"Expected a subset of {sorted(allowed)} plus weights/network/evaluation."
+                f"Expected a subset of {sorted(allowed)} plus weights/network/evaluation/llm."
             )
         return cls(
             weights=weights_raw if weights_raw is not None else dict(DEFAULT_WEIGHTS),
             network=network,
             evaluation=evaluation,
+            llm=llm,
             **data,
         )
 

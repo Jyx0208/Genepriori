@@ -10,6 +10,7 @@ import pytest
 from genepriori.config import (
     WEIGHT_PRESETS,
     EvaluationConfig,
+    LLMConfig,
     NetworkConfig,
     RunConfig,
     resolve_weights,
@@ -133,3 +134,43 @@ def test_with_weights_and_holdout_return_copies() -> None:
     assert changed.weights == WEIGHT_PRESETS["genetics"]
     assert changed.evaluation.holdout == "genetics"
     assert cfg.evaluation.holdout == "drug"
+
+
+def test_llm_config_defaults_are_deepseek() -> None:
+    cfg = LLMConfig()
+    assert cfg.base_url == "https://api.deepseek.com/v1"
+    assert cfg.model == "deepseek-chat"
+    assert cfg.api_key_env == "DEEPSEEK_API_KEY"
+
+
+def test_llm_config_rejects_bad_base_url() -> None:
+    with pytest.raises(ValueError, match="base_url"):
+        LLMConfig(base_url="ftp://example.com")
+
+
+def test_llm_config_rejects_bad_temperature() -> None:
+    with pytest.raises(ValueError, match="temperature"):
+        LLMConfig(temperature=3.0)
+
+
+def test_run_config_llm_roundtrip() -> None:
+    cfg = RunConfig(llm=LLMConfig(model="deepseek-reasoner", temperature=0.1))
+    restored = RunConfig.from_dict(cfg.to_dict())
+    assert restored.llm.model == "deepseek-reasoner"
+    assert restored.llm.temperature == 0.1
+
+
+def test_run_config_rejects_unknown_llm_key() -> None:
+    with pytest.raises(ValueError, match="Unknown llm key"):
+        RunConfig.from_dict({"llm": {"api_key": "oops"}})
+
+
+def test_run_config_yaml_carries_llm_block(tmp_path: Path) -> None:
+    cfg = RunConfig(llm=LLMConfig(base_url="https://example.com/v1", model="demo"))
+    path = cfg.save(tmp_path / "run.yaml")
+    text = path.read_text(encoding="utf-8")
+    assert "llm:" in text
+    assert "api_key_env" in text
+    assert "sk-" not in text
+    restored = RunConfig.load(path)
+    assert restored.llm.model == "demo"

@@ -79,6 +79,9 @@ def _args_payload(args: argparse.Namespace) -> Dict[str, Any]:
     for key, value in vars(args).items():
         if key == "func":
             continue
+        if key in {"llm_api_key"}:
+            payload[key] = "***" if value else None
+            continue
         if isinstance(value, (str, int, float, bool)) or value is None:
             payload[key] = value
         elif isinstance(value, (list, tuple)):
@@ -126,6 +129,13 @@ def _config_from_args(args: argparse.Namespace) -> RunConfig:
         config.string_version = args.string_version
     if getattr(args, "min_combined_score", None) is not None:
         config.min_combined_score = args.min_combined_score
+    if getattr(args, "llm_model", None) or getattr(args, "llm_base_url", None):
+        payload = config.to_dict()
+        if getattr(args, "llm_model", None):
+            payload["llm"]["model"] = args.llm_model
+        if getattr(args, "llm_base_url", None):
+            payload["llm"]["base_url"] = args.llm_base_url
+        config = RunConfig.from_dict(payload)
     # Re-validate after attribute assignment.
     return RunConfig.from_dict(config.to_dict())
 
@@ -513,6 +523,7 @@ def cmd_debate(args: argparse.Namespace) -> int:
             holdout=holdout,
             offline=args.offline,
             refresh=args.refresh,
+            llm_api_key=getattr(args, "llm_api_key", None),
         )
     outdir = Path(args.out or "results/debate")
     outdir.mkdir(parents=True, exist_ok=True)
@@ -558,6 +569,15 @@ def cmd_debate(args: argparse.Namespace) -> int:
         if best_lines:
             print("\nbest accepted claims:")
             print("\n".join(best_lines))
+        mode_used = next(iter(reports.values())).get("mode")
+        print(f"\nmode: {mode_used}")
+        llm_errors = [err for report in reports.values() for err in report.get("llm_errors", [])]
+        if llm_errors:
+            print(
+                f"warning: {len(llm_errors)} LLM call(s) failed; heuristic fallback was used. "
+                "See llm_errors in debate.json.",
+                file=sys.stderr,
+            )
         print(f"\nwritten to {outdir}")
     return 0
 
@@ -655,6 +675,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     cached_ppi = sorted(k for k in manifest if k.startswith("ppi/"))
     add("cached_diseases", "OK" if cached_diseases else "WARN", f"{len(cached_diseases)} file(s)")
     add("cached_ppi", "OK" if cached_ppi else "WARN", f"{len(cached_ppi)} file(s)")
+
+    from .agents.llm import resolve_api_key
+
+    llm_config = RunConfig().llm
+    api_key = resolve_api_key(llm_config)
+    if api_key:
+        masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
+        add("llm", "OK", f"{llm_config.model} | key {masked}")
+    else:
+        add("llm", "WARN", f"{llm_config.model} | no key")
 
     if args.offline:
         add("opentargets", "SKIP", "offline mode")
@@ -801,8 +831,18 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--diseases", action="append", default=None)
     sp.add_argument("--rounds", type=int, default=3)
     sp.add_argument("--budget", type=int, default=12)
-    sp.add_argument("--mode", choices=["heuristic", "llm"], default="heuristic")
+    sp.add_argument(
+        "--mode",
+        choices=["auto", "heuristic", "llm"],
+        default="auto",
+        help="auto uses the LLM when an API key is configured",
+    )
     sp.add_argument("--holdout", choices=["drug", "genetics", "both"], default="both")
+    sp.add_argument("--llm-api-key", default=None,
+                    help="API key value; prefer DEEPSEEK_API_KEY or a .env file")
+    sp.add_argument("--llm-model", default=None, help="e.g. deepseek-chat")
+    sp.add_argument("--llm-base-url", default=None,
+                    help="OpenAI-compatible endpoint, e.g. https://api.deepseek.com/v1")
     sp.add_argument("--weights", default=None)
     sp.add_argument("--network", default=None)
     sp.add_argument("--config", default=None)
@@ -838,11 +878,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     _setup_logging(args)
     try:
+        from .agents.llm import load_dotenv
+
+        load_dotenv()
+    except Exception:  # pragma: no cover - .env support must never block the CLI
+        pass
+    try:
         return int(args.func(args))
     except (ValueError, FileNotFoundError, OpenTargetsError, StringError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         if "cached" in str(exc).lower() or "offline" in str(exc).lower():
             print("hint: run without --offline, or fetch the data first.", file=sys.stderr)
+        if "api key" in str(exc).lower():
+            print(
+                "hint: export DEEPSEEK_API_KEY=..., or put it in .env, "
+                "then rerun. Use --mode heuristic to run without an LLM.",
+                file=sys.stderr,
+            )
         return 2
     except KeyboardInterrupt:  # pragma: no cover
         print("interrupted", file=sys.stderr)

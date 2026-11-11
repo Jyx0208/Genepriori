@@ -1,14 +1,19 @@
-"""Optional LLM agents speaking any OpenAI-compatible chat API.
+"""LLM agents speaking the OpenAI-compatible chat API (DeepSeek by default).
 
-The implementation uses plain ``requests`` so no extra dependency is needed.
-Configuration comes from the environment:
+Configuration is resolved in this order:
 
-``GENEPRIORI_LLM_BASE_URL``  default ``https://api.deepseek.com/v1``
-``GENEPRIORI_LLM_MODEL``     default ``deepseek-chat``
-``GENEPRIORI_LLM_API_KEY``   falls back to ``DEEPSEEK_API_KEY`` / ``OPENAI_API_KEY``
+1. explicit ``LLMConfig`` (``llm:`` block in a run configuration)
+2. environment variables ``GENEPRIORI_LLM_BASE_URL`` / ``GENEPRIORI_LLM_MODEL``
+3. built-in defaults: ``https://api.deepseek.com/v1``, ``deepseek-chat``
 
-If a call fails or the response cannot be parsed, the agent silently falls
-back to its heuristic counterpart so a debate always completes.
+The API key is read from, in order: an explicit argument,
+``GENEPRIORI_LLM_API_KEY``, the variable named by ``llm.api_key_env``
+(default ``DEEPSEEK_API_KEY``), then ``OPENAI_API_KEY``. Put the key in a
+``.env`` file next to the working directory or in ``~/.genepriori/.env``;
+:func:`load_dotenv` picks it up.
+
+When a call fails or the response cannot be parsed, the agent falls back to
+its heuristic counterpart and records the error so the debate can report it.
 """
 
 from __future__ import annotations
@@ -18,10 +23,12 @@ import logging
 import os
 import re
 import time
-from typing import List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import requests
 
+from ..config import LLMConfig
 from ..network import SUPPORTED_ALGORITHMS
 from .base import Agent, DebateContext, Proposal, make_claim
 
@@ -29,6 +36,73 @@ LOG = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
 DEFAULT_MODEL = "deepseek-chat"
+API_KEY_ENV_ORDER = ("GENEPRIORI_LLM_API_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY")
+
+
+def load_dotenv(paths: Optional[List[Path]] = None) -> Dict[str, str]:
+    """Load ``KEY=VALUE`` pairs from ``.env`` files without overwriting env vars.
+
+    Searches ``./.env`` and ``~/.genepriori/.env`` by default. Returns the
+    values that were newly added to ``os.environ``.
+    """
+    if paths is None:
+        candidates = [Path.cwd() / ".env", Path.home() / ".genepriori" / ".env"]
+    else:
+        candidates = [Path(p) for p in paths]
+    loaded: Dict[str, str] = {}
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for raw in lines:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[len("export "):].strip()
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if not key or key in os.environ:
+                continue
+            os.environ[key] = value
+            loaded[key] = value
+    return loaded
+
+
+def resolve_api_key(config: Optional[LLMConfig] = None, *, explicit: Optional[str] = None) -> Optional[str]:
+    """Resolve the API key from an explicit value or the environment."""
+    if explicit:
+        return explicit.strip() or None
+    candidates = ["GENEPRIORI_LLM_API_KEY"]
+    if config is not None and config.api_key_env:
+        candidates.append(config.api_key_env)
+    candidates.extend(API_KEY_ENV_ORDER)
+    seen = set()
+    for name in candidates:
+        if name in seen:
+            continue
+        seen.add(name)
+        value = os.environ.get(name)
+        if value and value.strip():
+            return value.strip()
+    return None
+
+
+def resolve_mode(mode: str, api_key: Optional[str]) -> str:
+    """``auto`` becomes ``llm`` when a key is available, else ``heuristic``."""
+    normalized = (mode or "auto").strip().lower()
+    if normalized == "auto":
+        return "llm" if api_key else "heuristic"
+    if normalized not in {"llm", "heuristic"}:
+        raise ValueError(f"Unsupported debate mode {mode!r}; expected auto, llm or heuristic.")
+    return normalized
+
 
 SYSTEM_PROMPT = """You are one of four research agents in GenePriori, a leakage-aware gene
 prioritization framework. You propose parameterised hypotheses ("claims") that
@@ -62,26 +136,27 @@ class LLMClient:
 
     def __init__(
         self,
+        config: Optional[LLMConfig] = None,
         *,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
         api_key: Optional[str] = None,
-        temperature: float = 0.2,
-        timeout: float = 120.0,
-        max_retries: int = 2,
+        temperature: Optional[float] = None,
+        timeout: Optional[float] = None,
+        max_retries: Optional[int] = None,
         session: Optional[requests.Session] = None,
     ) -> None:
-        self.base_url = (base_url or os.environ.get("GENEPRIORI_LLM_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-        self.model = model or os.environ.get("GENEPRIORI_LLM_MODEL") or DEFAULT_MODEL
-        self.api_key = (
-            api_key
-            or os.environ.get("GENEPRIORI_LLM_API_KEY")
-            or os.environ.get("DEEPSEEK_API_KEY")
-            or os.environ.get("OPENAI_API_KEY")
+        config = config or LLMConfig()
+        self.base_url = (
+            base_url or os.environ.get("GENEPRIORI_LLM_BASE_URL") or config.base_url
+        ).rstrip("/")
+        self.model = model or os.environ.get("GENEPRIORI_LLM_MODEL") or config.model
+        self.api_key = resolve_api_key(config, explicit=api_key)
+        self.temperature = config.temperature if temperature is None else float(temperature)
+        self.timeout = config.timeout if timeout is None else float(timeout)
+        self.max_retries = max(
+            0, int(config.max_retries if max_retries is None else max_retries)
         )
-        self.temperature = temperature
-        self.timeout = timeout
-        self.max_retries = max(0, int(max_retries))
         self.session = session or requests.Session()
 
     @property
@@ -91,8 +166,9 @@ class LLMClient:
     def chat(self, system: str, user: str) -> str:
         if not self.api_key:
             raise RuntimeError(
-                "No LLM API key configured. Set GENEPRIORI_LLM_API_KEY "
-                "(or DEEPSEEK_API_KEY / OPENAI_API_KEY), or use --mode heuristic."
+                "No LLM API key configured. Set DEEPSEEK_API_KEY (or "
+                "GENEPRIORI_LLM_API_KEY / OPENAI_API_KEY), add it to a .env file, "
+                "or run with --mode heuristic."
             )
         payload = {
             "model": self.model,
@@ -193,11 +269,14 @@ class LLMAgent(Agent):
         *,
         client: Optional[LLMClient] = None,
         fallback: Optional[Agent] = None,
+        allow_fallback: bool = True,
     ) -> None:
         self.name = name
         self.persona = persona
         self.client = client or LLMClient()
         self.fallback = fallback
+        self.allow_fallback = allow_fallback
+        self.last_error: Optional[str] = None
 
     def _user_prompt(self, context: DebateContext) -> str:
         best = context.best()
@@ -226,14 +305,17 @@ class LLMAgent(Agent):
         )
 
     def propose(self, context: DebateContext) -> List[Proposal]:
+        self.last_error = None
         try:
             text = self.client.chat(SYSTEM_PROMPT, self._user_prompt(context))
             proposals = parse_claims(text, context=context, agent_name=self.name)
             if proposals:
                 return proposals
+            self.last_error = "response contained no usable claims"
             LOG.warning("%s returned no usable claims; using heuristic fallback", self.name)
         except Exception as exc:  # noqa: BLE001 - never break the debate
+            self.last_error = f"{type(exc).__name__}: {exc}"
             LOG.warning("%s LLM call failed (%s); using heuristic fallback", self.name, exc)
-        if self.fallback is not None:
+        if self.allow_fallback and self.fallback is not None:
             return self.fallback.propose(context)
         return []

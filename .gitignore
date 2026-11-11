@@ -15,3 +15,5 @@ htmlcov/
 results/
 demo_results/
 .zcode/
+
+.env

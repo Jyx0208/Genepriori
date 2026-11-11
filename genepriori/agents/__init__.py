@@ -12,7 +12,14 @@ from .heuristic import (
     TranslationalAgent,
     default_agents,
 )
-from .llm import LLMAgent, LLMClient, parse_claims
+from .llm import (
+    LLMAgent,
+    LLMClient,
+    load_dotenv,
+    parse_claims,
+    resolve_api_key,
+    resolve_mode,
+)
 
 __all__ = [
     "Agent",
@@ -31,6 +38,9 @@ __all__ = [
     "default_agents",
     "LLMAgent",
     "LLMClient",
+    "load_dotenv",
+    "resolve_api_key",
+    "resolve_mode",
     "parse_claims",
     "run_debate",
     "config_for_claim",

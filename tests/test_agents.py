@@ -17,8 +17,15 @@ from genepriori.agents.heuristic import (
     TranslationalAgent,
     default_agents,
 )
-from genepriori.agents.llm import LLMAgent, LLMClient, parse_claims
-from genepriori.config import RunConfig
+from genepriori.agents.llm import (
+    LLMAgent,
+    LLMClient,
+    load_dotenv,
+    parse_claims,
+    resolve_api_key,
+    resolve_mode,
+)
+from genepriori.config import LLMConfig, RunConfig
 from genepriori.data.cache import Cache
 from genepriori.data.registry import resolve_disease
 from genepriori.data.toy import build_toy_cache
@@ -236,6 +243,101 @@ def test_llm_agent_falls_back_on_failure(context: DebateContext) -> None:
     assert proposals
     # Fallback proposals keep the heuristic agent's provenance.
     assert proposals[0].claim.agent_name == "CausalGenetics"
+    assert agent.last_error and "boom" in agent.last_error
+
+
+# --------------------------------------------------------------- LLM config
+KEY_VARS = ("GENEPRIORI_LLM_API_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY")
+
+
+def _clear_keys(monkeypatch) -> None:
+    for name in KEY_VARS:
+        monkeypatch.delenv(name, raising=False)
+
+
+def test_resolve_mode_auto(monkeypatch) -> None:
+    assert resolve_mode("auto", None) == "heuristic"
+    assert resolve_mode("auto", "key") == "llm"
+    with pytest.raises(ValueError):
+        resolve_mode("magic", None)
+
+
+def test_resolve_api_key_order(monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    assert resolve_api_key(LLMConfig()) is None
+    monkeypatch.setenv("OPENAI_API_KEY", "openai")
+    assert resolve_api_key(LLMConfig()) == "openai"
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "deepseek")
+    assert resolve_api_key(LLMConfig()) == "deepseek"
+    assert resolve_api_key(LLMConfig(), explicit="explicit") == "explicit"
+
+
+def test_resolve_api_key_custom_env_var(monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    monkeypatch.setenv("MY_LLM_KEY", "custom")
+    assert resolve_api_key(LLMConfig(api_key_env="MY_LLM_KEY")) == "custom"
+
+
+def test_load_dotenv(tmp_path: Path, monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    path = tmp_path / ".env"
+    path.write_text(
+        "# comment\nDEEPSEEK_API_KEY=abc123\nexport FOO='bar'\nINVALID LINE\n",
+        encoding="utf-8",
+    )
+    loaded = load_dotenv([path])
+    assert loaded["DEEPSEEK_API_KEY"] == "abc123"
+    assert loaded["FOO"] == "bar"
+    assert resolve_api_key(LLMConfig()) == "abc123"
+    for name in ("DEEPSEEK_API_KEY", "FOO"):
+        monkeypatch.delenv(name, raising=False)
+
+
+def test_load_dotenv_does_not_override(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "from-env")
+    path = tmp_path / ".env"
+    path.write_text("DEEPSEEK_API_KEY=from-file\n", encoding="utf-8")
+    load_dotenv([path])
+    assert resolve_api_key(LLMConfig()) == "from-env"
+
+
+def test_llm_client_reads_config(monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    monkeypatch.delenv("GENEPRIORI_LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("GENEPRIORI_LLM_MODEL", raising=False)
+    client = LLMClient(LLMConfig(base_url="https://example.com/v1", model="demo-model"))
+    assert client.base_url == "https://example.com/v1"
+    assert client.model == "demo-model"
+    assert client.configured
+
+
+def test_llm_client_sends_openai_payload(monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    captured = {}
+
+    class FakeResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": "ok"}}]}
+
+    class FakeSession:
+        def post(self, url, json=None, headers=None, timeout=None):
+            captured["url"] = url
+            captured["json"] = json
+            captured["auth"] = headers["Authorization"]
+            return FakeResponse()
+
+    client = LLMClient(LLMConfig(), session=FakeSession())
+    assert client.chat("sys", "usr") == "ok"
+    assert captured["url"].endswith("/chat/completions")
+    assert captured["json"]["model"] == "deepseek-chat"
+    assert captured["auth"] == "Bearer k"
 
 
 # -------------------------------------------------------------------- debate
@@ -257,3 +359,75 @@ def test_run_debate_smoke(tmp_path: Path) -> None:
     assert isinstance(report["decisions"][0]["accepted"], bool)
     assert report["leaderboard"]
     assert report["best"] is None or report["best"]["auprc"] >= 0
+
+
+def test_run_debate_auto_without_key_uses_heuristic(tmp_path: Path, monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    root = build_toy_cache(tmp_path / "cache")
+    report = run_debate(
+        [resolve_disease("MONDO_9000001")],
+        config=RunConfig(),
+        cache=Cache(root),
+        rounds=1,
+        budget=2,
+        holdout="drug",
+        offline=True,
+    )
+    assert report["mode"] == "heuristic"
+    assert report["mode_requested"] == "auto"
+    assert report["llm"]["enabled"] is False
+
+
+def test_run_debate_llm_without_key_raises(tmp_path: Path, monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    root = build_toy_cache(tmp_path / "cache")
+    with pytest.raises(ValueError, match="no API key"):
+        run_debate(
+            [resolve_disease("MONDO_9000001")],
+            config=RunConfig(),
+            cache=Cache(root),
+            rounds=1,
+            budget=1,
+            mode="llm",
+            holdout="drug",
+            offline=True,
+        )
+
+
+def test_run_debate_auto_with_key_uses_llm(tmp_path: Path, monkeypatch) -> None:
+    _clear_keys(monkeypatch)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+
+    claim_json = (
+        '{"claims": [{"title": "llm claim", "hypothesis": "h", '
+        '"evidence_type_weights": {"drug": 0.0, "genetics": 0.6, "pathway": 0.4}, '
+        '"network_algorithm": "ppr", "network_params": {}, '
+        '"expected_auprc_gain": 0.001, "expected_recall_gain": 0.001, '
+        '"risk_tags": [], "falsification_test": "f"}]}'
+    )
+
+    class StubClient(LLMClient):
+        def __init__(self):  # noqa: D401 - bypass env lookup
+            self.api_key = "k"
+            self.base_url = "stub"
+            self.model = "stub"
+
+        def chat(self, system: str, user: str) -> str:
+            return claim_json
+
+    root = build_toy_cache(tmp_path / "cache")
+    report = run_debate(
+        [resolve_disease("MONDO_9000001")],
+        config=RunConfig(),
+        cache=Cache(root),
+        rounds=1,
+        budget=2,
+        mode="auto",
+        holdout="drug",
+        offline=True,
+        llm_client=StubClient(),
+    )
+    assert report["mode"] == "llm"
+    assert report["llm"]["enabled"] is True
+    assert any(entry["claim_id"].startswith("llm-") for entry in report["decisions"])
+    assert report["llm_errors"] == []

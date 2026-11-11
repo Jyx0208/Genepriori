@@ -167,12 +167,18 @@ genepriori debate --diseases MONDO_0004989 --holdout genetics --mode llm
 | `--diseases` | `oncology` |
 | `--rounds` | 3 |
 | `--budget` | 12 |
-| `--mode` | `heuristic` (`llm` requires an API key) |
+| `--mode` | `auto` (`llm` if a key is found, else `heuristic`) |
 | `--holdout` | `both` |
+| `--llm-model` | `deepseek-chat` |
+| `--llm-base-url` | `https://api.deepseek.com/v1` |
+| `--llm-api-key` | none (prefer `DEEPSEEK_API_KEY` or `.env`) |
 
-LLM configuration: `GENEPRIORI_LLM_BASE_URL`, `GENEPRIORI_LLM_MODEL`,
-`GENEPRIORI_LLM_API_KEY` (falls back to `DEEPSEEK_API_KEY` /
-`OPENAI_API_KEY`).
+API key resolution: `GENEPRIORI_LLM_API_KEY`, then `DEEPSEEK_API_KEY` (or the
+variable named by `llm.api_key_env`), then `OPENAI_API_KEY`. A `.env` file in
+the working directory or in `~/.genepriori/` is loaded automatically.
+
+In `auto` mode the report records both `mode_requested` and `mode`; failed LLM
+calls fall back to the heuristic agent and are listed under `llm_errors`.
 
 ## `genepriori demo`
 
