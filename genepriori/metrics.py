@@ -1,4 +1,4 @@
-"""Ranking metrics used in the manuscript (AUPRC, Recall@K, bootstrap)."""
+"""Ranking metrics: AUPRC, Recall@K and bootstrap helpers."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def auprc(
     precision and recall are computed at every rank, the curve starts at the
     anchor point (recall = 0, precision = 1), and integration uses the
     trapezoidal rule. This follows the trapezoidal approximation cited in the
-    manuscript and differs slightly from step-wise
+    This differs slightly from step-wise
     ``sklearn.metrics.average_precision_score``.
 
     If ``scores`` is provided, the ranking is re-derived from it. Passing a

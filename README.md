@@ -11,7 +11,7 @@ themselves derived from the literature.
 - **Ready to use**: one command returns a ranked gene table for any EFO/MONDO disease.
 - **Leakage-aware**: drug-target and genetic-association holdouts are masked at scoring time, with an auditor and cross-validation.
 - **Reproducible**: deterministic seeds, cached inputs with checksums, and a run manifest for every output.
-- **Extensible**: the multi-agent claim debate from the manuscript is included, with heuristic agents that need no API key.
+- **Extensible**: a multi-agent claim debate is included, with heuristic agents that need no API key.
 
 ---
 
@@ -171,15 +171,14 @@ renormalized, so measured performance comes from complementary signals.
 
 ### Two evaluation protocols
 
-The manuscript's wording admits two readings, so both are implemented
-explicitly (`--protocol`):
+Two protocols are available (`--protocol`):
 
 - **`mask`** (default, strictest): holdout evidence is masked for every gene.
   The folds partition the positives; each fold measures recovery against all
   non-positives. Reported mean/SD reflects stability across positive subsets.
-- **`restore`** (manuscript-literal): for each fold, that fold's positives are
-  removed from the gold standard and their holdout evidence is restored; the
-  remaining positives are evaluated. Ranking is recomputed per fold.
+- **`restore`**: for each fold, that fold's positives are removed from the gold
+  standard and their holdout evidence is restored; the remaining positives are
+  evaluated. Ranking is recomputed per fold.
 
 In both protocols, evaluated positives never contribute their holdout
 evidence.
@@ -257,7 +256,7 @@ debate always completes.
 | source | default | pin for reproduction |
 |---|---|---|
 | Open Targets Platform | current release, live GraphQL API | `--ot-release` is recorded in the manifest; fetch date is stored per disease |
-| STRING | v12.5 | `--string-version 12.0` (manuscript) |
+| STRING | v12.5 | `--string-version 12.0` (older releases) |
 
 Downloads are cached under `~/.genepriori` (override with `GENEPRIORI_HOME`,
 `--cache-dir`, or `cache_dir` in the config). Each artifact is registered in
@@ -265,13 +264,18 @@ Downloads are cached under `~/.genepriori` (override with `GENEPRIORI_HOME`,
 
 ---
 
-## Reproducing the manuscript
+## Reproducing published results
 
-The original experiment code was not preserved; this package re-implements the
-described methods. Because Open Targets and STRING releases have moved on,
-numbers will not match the paper exactly. See
-[docs/reproduction.md](docs/reproduction.md) for the recommended settings and
-a list of known sources of divergence.
+Pin the data versions and record the manifest:
+
+```bash
+genepriori fetch-ppi --string-version 12.0
+genepriori benchmark --diseases registry --holdout both \
+    --variants baseline,ppr,rwr,genetics_ppr,translational_ppr
+```
+
+See [docs/reproduction.md](docs/reproduction.md) for version pinning, the
+commands behind each output table, and the settings that affect numbers.
 
 ---
 

@@ -5,9 +5,8 @@ protein identifiers to preferred gene names, filters by ``combined_score`` and
 caches the resulting edge list as a compact gzipped TSV so that later runs do
 not re-parse a multi-hundred-megabyte file.
 
-The manuscript used STRING v12.0; the current release is v12.5. Pin the
-version with ``version="12.0"`` to reproduce the reported setup when the
-archive is still available.
+STRING v12.5 is the current release; older archives such as v12.0 remain
+available and can be selected with ``version="12.0"``.
 """
 
 from __future__ import annotations
@@ -161,7 +160,7 @@ def build_edges(
     """Parse ``protein.links`` into gene-symbol edges with weights in [0, 1].
 
     STRING scores are integers in [0, 1000]; the weight is
-    ``combined_score / 1000`` so the manuscript threshold of 400 becomes 0.4.
+    ``combined_score / 1000`` so a threshold of 400 becomes weight 0.4.
     Edges whose proteins have no gene symbol are skipped. The output is
     symmetric and deduplicated: each undirected pair appears once (lexico-
     graphically ordered) with its maximum score, which is the representation

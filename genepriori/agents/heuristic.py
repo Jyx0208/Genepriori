@@ -1,7 +1,6 @@
 """Heuristic agents: deterministic claim generators requiring no LLM.
 
-The four personas mirror the manuscript: CausalGenetics emphasises genetic
-evidence, NetworkMechanism explores propagation configurations, Translational
+The four personas are: CausalGenetics emphasises genetic evidence, NetworkMechanism explores propagation configurations, Translational
 balances biological and clinical signals, and ConsensusDesigner only appears
 from round 2 and synthesises the current leaderboard.
 """

@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ## 0.2.0 — 2026-11-11
 
-A complete, installable tool built around the original algorithm modules. The
+A complete, installable tool built around the core algorithm modules. The
 public API of the five existing modules is preserved.
 
 ### Added

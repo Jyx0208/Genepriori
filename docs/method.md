@@ -1,8 +1,8 @@
 # Methods implemented
 
 This page documents exactly what the code computes, so that results can be
-audited without reading the source. Defaults follow the manuscript unless
-noted.
+audited without reading the source. Every parameter is listed with its
+default.
 
 ## 1. Evidence mapping
 
@@ -102,7 +102,7 @@ Fold *k* evaluates the fold's positives against all non-positives. Mean/SD
 across folds describes stability across positive subsets; the ranking itself
 does not change between folds.
 
-### `restore` (manuscript-literal)
+### `restore`
 
 For fold *k*:
 

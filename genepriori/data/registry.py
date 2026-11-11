@@ -3,8 +3,9 @@
 Disease identifiers follow the current Open Targets release, which uses
 MONDO as the primary ontology (legacy EFO identifiers are increasingly
 retired). Any EFO/MONDO identifier can be used directly on the command line;
-the registry is only a convenience for the 19 diseases used in the
-manuscript.
+the registry is a convenience list of 19 diseases spanning oncology,
+neurodegeneration, psychiatry, autoimmunity, respiratory, cardiovascular,
+metabolic and renal categories.
 """
 
 from __future__ import annotations

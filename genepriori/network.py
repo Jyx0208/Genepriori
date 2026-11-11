@@ -35,7 +35,7 @@ def build_adjacency(
 ) -> Tuple[List[str], sparse.csr_matrix]:
     """Build symmetric weighted adjacency from (src, tgt, weight) edges.
 
-    Manuscript: STRING combined_score >= 400 => weight in [0.4, 1.0] after /1000.
+    STRING combined_score >= 400 => weight in [0.4, 1.0] after /1000.
     """
     nodes: Dict[str, int] = {}
     kept: List[Edge] = []
@@ -169,7 +169,7 @@ def personalized_pagerank(
     tol: float = 1e-6,
     max_iter: int = 100,
 ) -> np.ndarray:
-    """p_{t+1} = d W p_t + (1-d) p0  (manuscript PPR)."""
+    """p_{t+1} = d W p_t + (1-d) p0  (personalized PageRank)."""
     n = adj.shape[0]
     p0 = _initial_distribution(n, personalization)
     if n == 0:
@@ -193,7 +193,7 @@ def random_walk_with_restart(
     tol: float = 1e-6,
     max_iter: int = 100,
 ) -> np.ndarray:
-    """p_{t+1} = (1-r) W p_t + r p0  (manuscript RWR).
+    """p_{t+1} = (1-r) W p_t + r p0  (random walk with restart).
 
     Study default restart_prob = 0.30 (the reported runs used r = 0.30 with
     PPR damping 0.85; the duality r = 1 - damping is a mathematical identity

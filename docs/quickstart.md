@@ -68,7 +68,8 @@ genepriori evaluate --disease "breast carcinoma" --holdout both -o results/eval
 
 You get AUPRC, Recall@20, SD across folds and a t-based 95% CI for both
 holdouts. Read the `protocol` column: `mask` is the strict default; `restore`
-follows the manuscript's wording literally.
+removes one fifth of the positives per fold and restores their holdout
+evidence before ranking.
 
 ## 6. Go further
 

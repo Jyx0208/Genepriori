@@ -2,9 +2,9 @@
 
 The client talks to ``https://api.platform.opentargets.org/api/v4/graphql``
 (no API key required) and paginates over ``disease.associatedTargets``.
-Datatype scores are mapped to the six standardized evidence types from
-Table 3 of the manuscript; datasource scores are ignored by default because
-they are finer-grained and already aggregated into datatypes.
+Datatype scores are mapped to the six standardized evidence types;
+datasource scores are ignored by default because they are finer-grained and
+already aggregated into datatypes.
 """
 
 from __future__ import annotations

@@ -14,7 +14,7 @@ def build_positives(
     *,
     threshold: float = 0.30,
 ) -> Set[str]:
-    """Positives: genes with holdout-type score > threshold (manuscript: 0.30).
+    """Positives: genes with holdout-type score > threshold (default: 0.30).
 
     Holdout types: drug (known_drug) or genetics (genetic_association).
     """

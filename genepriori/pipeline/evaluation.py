@@ -1,8 +1,7 @@
 """Dual-holdout cross-validation with explicit, documented protocols.
 
-Two protocols are supported because the manuscript's wording ("its
-holdout-type evidence was restored to scoring") admits two readings. Both are
-implemented explicitly rather than guessed at:
+Two protocols are supported, because they answer different questions and
+both are used in practice:
 
 ``mask`` (strict)
     The holdout evidence type is masked for *every* gene. One ranking is
@@ -10,7 +9,7 @@ implemented explicitly rather than guessed at:
     computed against all non-positives. Reported mean/SD therefore measures
     how stable recovery is across positive subsets.
 
-``restore`` (manuscript-literal)
+``restore``
     For fold *k*, the fold's positives are removed from the gold standard and
     their holdout-type evidence is restored, so they are neither scored as
     positives nor treated as negatives. The remaining positives are evaluated

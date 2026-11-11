@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Iterable, Mapping, Optional
 
-# Manuscript Table 3: Open Targets fine-grained types -> six standardized types.
+# Open Targets fine-grained types -> six standardized types.
 # When multiple fine-grained scores exist for the same gene and category, keep max.
 # ``clinical`` is the current name of the drug/clinical datatype (the older
 # ``known_drug`` label is kept as an alias for archived responses).
@@ -34,7 +34,7 @@ STANDARD_TYPES = (
     "animal_model",
 )
 
-# Holdout protocol names used in the manuscript.
+# Holdout protocol names and aliases.
 HOLDOUT_TO_STANDARD = {
     "drug": "drug",
     "drug_target": "drug",
@@ -120,7 +120,7 @@ def renorm_weights(
 
 
 def confidence_from_n_types(n_types: int) -> float:
-    """Manuscript: confidence(g) = min(1.0, 0.35 + 0.12 * n_types(g))."""
+    """confidence(g) = min(1.0, 0.35 + 0.12 * n_types(g))."""
     return min(1.0, 0.35 + 0.12 * float(n_types))
 
 
