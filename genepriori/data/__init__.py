@@ -1,0 +1,75 @@
+"""Data acquisition layer: Open Targets evidence, STRING PPI, local cache."""
+
+from __future__ import annotations
+
+from .cache import Cache, default_home, utc_now
+from .opentargets import (
+    OT_GRAPHQL_URL,
+    DiseaseEvidence,
+    OpenTargetsClient,
+    OpenTargetsError,
+    evidence_summary,
+    fetch_disease_evidence,
+    rows_to_evidence,
+)
+from .registry import (
+    DEFAULT_DISEASES,
+    Disease,
+    diseases_by_category,
+    find_disease,
+    is_disease_id,
+    iter_registry,
+    list_diseases,
+    resolve_disease,
+)
+from .string import (
+    DEFAULT_MIN_COMBINED_SCORE,
+    DEFAULT_STRING_VERSION,
+    DEFAULT_TAXID,
+    StringError,
+    build_edges,
+    download_string,
+    edges_cache_key,
+    info_url,
+    links_url,
+    load_id_map,
+    load_string_edges,
+    ppi_summary,
+    read_edges_cache,
+    write_edges_cache,
+)
+
+__all__ = [
+    "Cache",
+    "default_home",
+    "utc_now",
+    "OT_GRAPHQL_URL",
+    "OpenTargetsClient",
+    "OpenTargetsError",
+    "DiseaseEvidence",
+    "fetch_disease_evidence",
+    "rows_to_evidence",
+    "evidence_summary",
+    "Disease",
+    "DEFAULT_DISEASES",
+    "list_diseases",
+    "diseases_by_category",
+    "find_disease",
+    "resolve_disease",
+    "iter_registry",
+    "is_disease_id",
+    "DEFAULT_STRING_VERSION",
+    "DEFAULT_TAXID",
+    "DEFAULT_MIN_COMBINED_SCORE",
+    "StringError",
+    "links_url",
+    "info_url",
+    "download_string",
+    "load_id_map",
+    "build_edges",
+    "write_edges_cache",
+    "read_edges_cache",
+    "edges_cache_key",
+    "load_string_edges",
+    "ppi_summary",
+]

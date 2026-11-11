@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Mapping, MutableMapping, Optional
+from dataclasses import dataclass
+from typing import Dict, Iterable, Mapping, Optional
 
 # Manuscript Table 3: Open Targets fine-grained types -> six standardized types.
 # When multiple fine-grained scores exist for the same gene and category, keep max.
+# ``clinical`` is the current name of the drug/clinical datatype (the older
+# ``known_drug`` label is kept as an alias for archived responses).
 OT_TO_STANDARD: Dict[str, str] = {
     "known_drug": "drug",
     "drugs": "drug",
+    "clinical": "drug",
     "genetic_association": "genetics",
     "somatic_mutation": "genetics",
     "genetic_literature": "genetics",
@@ -41,6 +45,24 @@ HOLDOUT_TO_STANDARD = {
 }
 
 
+@dataclass(frozen=True)
+class FusedScores:
+    """Detailed output of :func:`fuse_gene_scores_detailed`.
+
+    ``scores``: gene -> fused score.
+    ``confidence``: gene -> confidence in [0.35, 1.0] from the number of
+    non-zero contributing evidence types.
+    ``n_types``: gene -> number of contributing evidence types.
+    ``contributions``: gene -> {standard type -> weighted contribution}, i.e.
+    ``weight * min_max_normalized_score``. Values sum to ``scores[gene]``.
+    """
+
+    scores: Dict[str, float]
+    confidence: Dict[str, float]
+    n_types: Dict[str, int]
+    contributions: Dict[str, Dict[str, float]]
+
+
 def map_ot_type(ot_type: str) -> Optional[str]:
     """Map an Open Targets evidence type string to a GenePriori standard type."""
     key = (ot_type or "").strip().lower()
@@ -58,6 +80,11 @@ def normalize_holdout_type(holdout_type: str) -> str:
 
 
 def min_max_normalize(scores: Mapping[str, float]) -> Dict[str, float]:
+    """Min-max scale to [0, 1] over the provided genes.
+
+    A type whose scores are constant (including a single-gene type) has no
+    discriminative power and normalizes to all zeros.
+    """
     if not scores:
         return {}
     vals = list(scores.values())
@@ -97,17 +124,18 @@ def confidence_from_n_types(n_types: int) -> float:
     return min(1.0, 0.35 + 0.12 * float(n_types))
 
 
-def fuse_gene_scores(
+def fuse_gene_scores_detailed(
     gene_type_scores: Mapping[str, Mapping[str, float]],
     weights: Mapping[str, float],
     *,
     holdout_type: Optional[str] = None,
-) -> Dict[str, float]:
-    """Weighted sum of min-max-normalized per-type scores.
+) -> FusedScores:
+    """Weighted sum of min-max-normalized per-type scores, with details.
 
     ``gene_type_scores``: gene -> {standard_type -> raw score}.
-    Returns a score dict only; ranking order is determined by callers
-    (``metrics.rank_genes`` breaks ties deterministically by gene symbol).
+    Per-type scores are min-max normalized across the provided genes before
+    weighting, matching the Methods ("Scores are min-max normalized before
+    aggregation"). Unknown evidence types are ignored.
     """
     w = renorm_weights(weights, holdout_type=holdout_type)
 
@@ -119,29 +147,61 @@ def fuse_gene_scores(
                 continue
             prev = type_to_gene[t].get(gene)
             # max if multiple contributions
-            type_to_gene[t][gene] = s if prev is None else max(prev, s)
+            type_to_gene[t][gene] = float(s) if prev is None else max(prev, float(s))
 
     type_norm = {t: min_max_normalize(m) for t, m in type_to_gene.items()}
 
-    genes = set(gene_type_scores)
-    out: Dict[str, float] = {}
-    for g in genes:
+    scores: Dict[str, float] = {}
+    confidence: Dict[str, float] = {}
+    n_types: Dict[str, int] = {}
+    contributions: Dict[str, Dict[str, float]] = {}
+    for g in sorted(gene_type_scores):
         score = 0.0
-        n_types = 0
+        count = 0
+        breakdown: Dict[str, float] = {}
         for t, wt in w.items():
             if wt <= 0:
                 continue
             v = type_norm[t].get(g)
             if v is None:
                 continue
-            score += wt * v
-            if v > 0:
-                n_types += 1
-        # confidence is available to callers via confidence_from_n_types if needed
-        _ = confidence_from_n_types(n_types)
-        out[g] = float(score)
+            contribution = wt * v
+            score += contribution
+            if contribution > 0:
+                breakdown[t] = contribution
+                count += 1
+        scores[g] = float(score)
+        n_types[g] = count
+        confidence[g] = confidence_from_n_types(count)
+        contributions[g] = breakdown
 
-    return out
+    return FusedScores(
+        scores=scores,
+        confidence=confidence,
+        n_types=n_types,
+        contributions=contributions,
+    )
+
+
+def fuse_gene_scores(
+    gene_type_scores: Mapping[str, Mapping[str, float]],
+    weights: Mapping[str, float],
+    *,
+    holdout_type: Optional[str] = None,
+) -> Dict[str, float]:
+    """Weighted sum of min-max-normalized per-type scores.
+
+    ``gene_type_scores``: gene -> {standard_type -> raw score}.
+    Returns a score dict only; ranking order is determined by callers
+    (``metrics.rank_genes`` breaks ties deterministically by gene symbol).
+    Use :func:`fuse_gene_scores_detailed` when per-gene confidence or the
+    evidence breakdown is needed.
+    """
+    return fuse_gene_scores_detailed(
+        gene_type_scores,
+        weights,
+        holdout_type=holdout_type,
+    ).scores
 
 
 def aggregate_ot_records(

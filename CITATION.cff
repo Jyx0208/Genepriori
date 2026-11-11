@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use GenePriori, please cite this repository and the accompanying manuscript."
+title: "GenePriori: leakage-aware gene prioritization with evidence fusion and network propagation"
+version: 0.2.0
+date-released: "2026-11-11"
+license: Apache-2.0
+repository-code: "https://github.com/Jyx0208/Genepriori"
+type: software
+keywords:
+  - gene prioritization
+  - drug target identification
+  - network propagation
+  - data leakage
+  - translational oncology
+authors:
+  - family-names: Jiang
+    given-names: Yuxuan
+  - family-names: Zhou
+    given-names: Xuancheng
+  - family-names: Jiang
+    given-names: Lai
+  - family-names: Huang
+    given-names: Gang
+  - family-names: Gu
+    given-names: Yuheng
+  - family-names: Yin
+    given-names: Shiyang
+  - family-names: Wang
+    given-names: Lexin
+  - family-names: Khadka
+    given-names: Vedbar
+  - family-names: Yang
+    given-names: Hua
+  - family-names: Chen
+    given-names: Shaoqiu
+  - family-names: Feng
+    given-names: Zhuokun
+  - family-names: Xu
+    given-names: Jiayu
+  - family-names: Xu
+    given-names: Ke
+  - family-names: Li
+    given-names: Xiaosong
+  - family-names: Chi
+    given-names: Hao
+  - family-names: Deng
+    given-names: Youping
