@@ -225,26 +225,23 @@ def evaluate_evidence(
 
     splits = kfold_splits(positives, n_folds=ev.folds, seed=ev.seed)
     fold_results: List[FoldResult] = []
+    masked_ranking = None
+    if ev.protocol == "mask":
+        direct = _fold_direct_scores(evidence, config, fold_genes=(), protocol="mask")
+        masked_ranking = rank_genes(_propagate_scores(direct, edges, config))
 
     for index, test_fold in enumerate(splits, start=1):
         train_fold = train_positives(positives, test_fold)
-        if ev.protocol == "mask":
+        if masked_ranking is not None:
             eval_positives = set(test_fold)
             excluded: set = set()
+            ranked = masked_ranking
         else:
             eval_positives = set(train_fold)
             excluded = set(test_fold)
-
-        direct = _fold_direct_scores(
-            evidence,
-            config,
-            fold_genes=test_fold,
-            protocol=ev.protocol,
-        )
-        scores = _propagate_scores(direct, edges, config)
-        ranked = rank_genes(scores)
-        if excluded:
-            ranked = [g for g in ranked if g not in excluded]
+            direct = _fold_direct_scores(evidence, config, fold_genes=test_fold, protocol=ev.protocol)
+            scores = _propagate_scores(direct, edges, config)
+            ranked = [gene for gene in rank_genes(scores) if gene not in excluded]
 
         metrics = {
             "auprc": auprc(ranked, eval_positives),

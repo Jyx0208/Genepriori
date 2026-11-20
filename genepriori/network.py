@@ -375,6 +375,7 @@ def propagate(
     max_network_genes: int = 80,
     heat_steps: int = 10,
     heat_step_size: float = 0.25,
+    network_scores_out: Optional[Dict[str, float]] = None,
 ) -> Dict[str, float]:
     """Run a propagation algorithm on the 1-hop seed subgraph and blend.
 
@@ -383,8 +384,11 @@ def propagate(
     ``none``/``""`` (no propagation). All are accepted by the LeakageAuditor.
 
     Study defaults: PPR damping = 0.85; RWR restart_prob = 0.30; blend = 0.70;
-    network_discount = 0.25; max_network_genes = 80.
+    network_discount = 0.25; max_network_genes = 80. If provided,
+    ``network_scores_out`` receives the normalized scores before blending.
     """
+    if network_scores_out is not None:
+        network_scores_out.clear()
     algo = (algorithm or "").strip().lower()
     if algo == "none":
         algo = ""
@@ -429,13 +433,15 @@ def propagate(
         )
 
     net = {names[i]: float(vec[i]) for i in range(len(names))}
-    # Include direct-only genes that fell outside the subgraph.
-    direct_full = dict(direct_scores)
+    if network_scores_out is not None:
+        net = min_max_normalize(net)
+        network_scores_out.update(net)
     return blend_scores(
-        direct_full,
+        direct_scores,
         net,
         degrees,
         blend=blend,
         network_discount=network_discount,
         max_network_genes=max_network_genes,
+        normalize_network=network_scores_out is None,
     )

@@ -205,6 +205,10 @@ genepriori rank --disease MONDO_0004989 --weights my_weights.yaml
 | `network_discovered` | 1 = no direct evidence, found through the PPI |
 | `drug`, `genetics`, `expression`, `pathway`, `literature`, `animal_model` | weighted contribution of each type |
 | `ensembl_id` | Ensembl gene ID |
+| `direct_score` | combined evidence score before blending with the network |
+| `network_score` | normalized propagation score before blending or discounting, zero when unavailable |
+| `baseline_rank` | position using the original debate configuration, blank if unavailable or absent |
+| `rank_change` | baseline rank minus final rank, positive for a move up, blank without a baseline rank |
 
 `result.json` — the same data in JSON.
 `run_manifest.json` — version, parameters, data provenance, timestamp.
@@ -258,6 +262,11 @@ deltas, win rates, sign tests and BH-adjusted p-values. `--diseases` accepts
 ```bash
 genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both
 ```
+
+After the debate, GenePriori selects a scoring configuration against the
+requested holdouts and saves a recommended `ranked_genes.csv` for each disease.
+The selection scores and final parameters are in `run_manifest.json`. Use
+`--no-ranking` to skip this final step.
 
 Four agents propose parameterised claims over three rounds: propose → audit →
 score/select → execute → accept/reject → feedback. A Governor allocates the

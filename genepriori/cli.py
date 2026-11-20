@@ -511,8 +511,14 @@ def cmd_debate(args: argparse.Namespace) -> int:
     cache = _make_cache(args)
     diseases = _collect_diseases(args.diseases or ["oncology"])
     holdouts = SUPPORTED_HOLDOUTS if args.holdout == "both" else (args.holdout,)
+    show_progress = not args.quiet and (args.progress if args.progress is not None else not args.json)
+
+    def emit_progress(message: str) -> None:
+        print(f"{prefix} {message}", file=sys.stderr, flush=True)
+
     reports: Dict[str, Any] = {}
-    for holdout in holdouts:
+    for index, holdout in enumerate(holdouts, 1):
+        prefix = f"[Holdout {index}/{len(holdouts)}: {holdout}]"
         reports[holdout] = run_debate(
             diseases,
             config=config,
@@ -524,18 +530,41 @@ def cmd_debate(args: argparse.Namespace) -> int:
             offline=args.offline,
             refresh=args.refresh,
             llm_api_key=getattr(args, "llm_api_key", None),
+            progress=emit_progress if show_progress else None,
         )
     outdir = Path(args.out or "results/debate")
     outdir.mkdir(parents=True, exist_ok=True)
     write_json(reports, outdir / "debate.json")
-    write_manifest(
-        outdir,
-        command="debate",
-        arguments=_args_payload(args),
-        config=config.to_dict(),
-        inputs={"diseases": [d.disease_id for d in diseases]},
-        outputs=["debate.json"],
-    )
+    manifest_fields = {
+        "command": "debate",
+        "arguments": _args_payload(args),
+        "config": config.to_dict(),
+        "inputs": {"diseases": [d.disease_id for d in diseases]},
+    }
+    outputs = ["debate.json"]
+    write_manifest(outdir, **manifest_fields, outputs=outputs)
+    if show_progress:
+        print(f"[Debate complete] Saved report to {outdir / 'debate.json'}", file=sys.stderr, flush=True)
+
+    ranking_paths = []
+    if args.ranking:
+        from .agents.recommendation import recommend_rankings
+
+        prefix = "[Ranking]"
+        selection, rankings = recommend_rankings(
+            diseases, reports, config=config, cache=cache,
+            progress=emit_progress if show_progress else None,
+        )
+        for ranking in rankings:
+            destination = outdir / "rankings" / ranking.disease_id if len(rankings) > 1 else outdir
+            csv_path, result_path = write_ranking(ranking, destination)
+            ranking_paths.append(csv_path)
+            outputs.extend(path.relative_to(outdir).as_posix() for path in (csv_path, result_path))
+        write_manifest(outdir, **manifest_fields, outputs=outputs, extra={"ranking_selection": selection})
+        if show_progress:
+            for path in ranking_paths:
+                emit_progress(f"Saved recommended ranking to {path}")
+
     if args.json:
         print(json.dumps(reports, indent=2))
     else:
@@ -578,6 +607,8 @@ def cmd_debate(args: argparse.Namespace) -> int:
                 "See llm_errors in debate.json.",
                 file=sys.stderr,
             )
+        for path in ranking_paths:
+            print(f"recommended ranking: {path}")
         print(f"\nwritten to {outdir}")
     return 0
 
@@ -828,6 +859,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--refresh", action="store_true")
 
     sp = add("debate", cmd_debate, "run the multi-agent claim debate")
+    sp.add_argument(
+        "--progress", action=argparse.BooleanOptionalAction, default=None,
+        help="show live debate progress and proposals on stderr (default unless using --json)",
+    )
+    sp.add_argument("--no-ranking", dest="ranking", action="store_false",
+                    help="save the debate report without generating a final ranking")
     sp.add_argument("--diseases", action="append", default=None)
     sp.add_argument("--rounds", type=int, default=3)
     sp.add_argument("--budget", type=int, default=12)
