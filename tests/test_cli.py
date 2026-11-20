@@ -170,6 +170,13 @@ def test_debate_command(cache_dir: Path, tmp_path: Path, capsys) -> None:
     assert code == 0
     payload = json.loads((outdir / "debate.json").read_text(encoding="utf-8"))
     assert "drug" in payload
+    manifest = json.loads((outdir / "run_manifest.json").read_text(encoding="utf-8"))
+    for disease_id in ("MONDO_9000001", "MONDO_9000002"):
+        ranking = f"rankings/{disease_id}/ranked_genes.csv"
+        assert ranking in manifest["outputs"]
+        assert (outdir / ranking).read_text(encoding="utf-8").startswith("rank,gene,score,")
+        result = json.loads((outdir / f"rankings/{disease_id}/result.json").read_text(encoding="utf-8"))
+        assert result["disease_id"] == disease_id and result["ranked"]
 
 
 def test_debate_shows_model_reply_and_assessment_as_they_happen(
@@ -193,7 +200,7 @@ def test_debate_shows_model_reply_and_assessment_as_they_happen(
                 "hypothesis": f"Expression may help. \x1b[31m{private_key}",
                 "evidence_type_weights": {"genetics": 0.6, "expression": 0.4},
                 "network_algorithm": "rwr",
-                "network_params": {"restart_prob": 0.3},
+                "network_params": {"restart_prob": 0.3, "blend": 0.9},
                 "falsification_test": "AUPRC does not improve",
             }
             return {"choices": [{"message": {"content": json.dumps({"claims": [claim]})}}]}
@@ -225,6 +232,24 @@ def test_debate_shows_model_reply_and_assessment_as_they_happen(
     assert report["llm"] == {
         "enabled": True, "model": "mock-flash", "base_url": "https://example.com/v1",
     }
+    assert len(seen) == 4
+    selection = json.loads((outdir / "run_manifest.json").read_text(encoding="utf-8"))["ranking_selection"]
+    assert selection["selected"] == "drug_winner"
+    assert selection["candidates"]["drug_winner"]["claim_id"] == report["best"]["claim_id"]
+    result = json.loads((outdir / "result.json").read_text(encoding="utf-8"))
+    assert result["config"]["weights"]["drug"] == pytest.approx(1 / 6)
+    assert result["config"]["network"]["algorithm"] == "rwr"
+    from genepriori import prioritize
+
+    baseline = prioritize("MONDO_9000001", cache_dir=cache_dir, offline=True)
+    positions = {row.gene: row.rank for row in baseline.ranked}
+    assert any(row["rank"] != positions.get(row["gene"]) for row in result["ranked"])
+    for row in result["ranked"]:
+        before = positions.get(row["gene"])
+        assert row["baseline_rank"] == before
+        assert row["rank_change"] == (before - row["rank"] if before is not None else None)
+    csv_text = (outdir / "ranked_genes.csv").read_text(encoding="utf-8")
+    assert csv_text.splitlines()[0].endswith("direct_score,network_score,baseline_rank,rank_change")
 
 
 def test_debate_reports_llm_fallback(cache_dir, tmp_path, capsys, monkeypatch):
@@ -265,9 +290,29 @@ def test_debate_progress_keeps_json_stdout_clean(cache_dir, tmp_path, capsys, fl
     assert ("Holdout 1/2" in output.err) is visible
     assert ("Holdout 2/2" in output.err) is visible
     assert ("Saved report to" in output.err) is visible
+    assert ("Selected scoring configuration" in output.err) is visible
     if visible:
         assert output.err.index("Holdout 1/2") < output.err.index("Holdout 2/2")
-        assert output.err.index("Holdout 2/2") < output.err.index("Saved report to")
+        assert output.err.index("Holdout 2/2") < output.err.index("Selected scoring configuration")
+    manifest = json.loads((tmp_path / "debate" / "run_manifest.json").read_text(encoding="utf-8"))
+    selection = manifest["ranking_selection"]
+    chosen = selection["candidates"][selection["selected"]]["auprc"]
+    baseline = selection["candidates"]["baseline"]["auprc"]
+    assert set(chosen) == {"drug", "genetics"}
+    assert all(chosen[key] >= baseline[key] for key in baseline)
+
+
+def test_debate_can_skip_final_ranking(cache_dir, tmp_path):
+    outdir = tmp_path / "debate"
+    assert main([
+        "debate", "--diseases", "MONDO_9000001", "--cache-dir", str(cache_dir),
+        "--offline", "--mode", "heuristic", "--holdout", "drug", "--rounds", "1",
+        "--budget", "2", "--no-ranking", "-o", str(outdir),
+    ]) == 0
+    manifest = json.loads((outdir / "run_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["outputs"] == ["debate.json"]
+    assert "ranking_selection" not in manifest
+    assert not (outdir / "ranked_genes.csv").exists()
 
 
 def test_unknown_disease_returns_error_code(capsys) -> None:

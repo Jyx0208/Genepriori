@@ -17,7 +17,7 @@ from genepriori.pipeline.evaluation import (
     compare_evaluations,
     evaluate_evidence,
 )
-from genepriori.pipeline.fusion import prioritize
+from genepriori.pipeline.fusion import build_ranking, prioritize
 from genepriori.pipeline.report import write_evaluation, write_ranking
 
 
@@ -50,7 +50,35 @@ def test_network_discovers_genes_without_direct_evidence(toy) -> None:
     discovered = [row for row in result.ranked if row.network_discovered]
     assert discovered, "expected network-discovered genes"
     for row in discovered:
-        assert row.score > 0.0
+        assert row.direct_score == 0.0
+        assert row.network_score > 0.0
+        assert 0.0 < row.score <= row.network_score * 0.25
+
+
+def test_ppr_scores_show_direct_and_normalized_network_inputs(toy) -> None:
+    cache, _ = toy
+    result = prioritize("MONDO_9000001", cache=cache, offline=True, network="ppr")
+    seeds = [row for row in result.ranked if row.n_evidence_types > 0]
+    assert seeds and max(row.network_score for row in seeds) == pytest.approx(1.0)
+    for row in seeds:
+        assert row.direct_score == pytest.approx(sum(row.evidence.values()))
+        assert row.score == pytest.approx(0.7 * row.direct_score + 0.3 * row.network_score)
+
+
+def test_zero_direct_scores_are_not_network_discoveries_when_network_disabled() -> None:
+    evidence = DiseaseEvidence("MONDO_9000001", "synthetic", {
+        "A": {"genetics": 0.9}, "B": {"genetics": 0.1},
+    })
+    config = RunConfig()
+    config.network.algorithm = "none"
+    result = build_ranking(evidence, config=config)
+    by_gene = {row.gene: row for row in result.ranked}
+    assert by_gene["B"].score == 0.0
+    for row in by_gene.values():
+        assert row.direct_score == row.score
+        assert row.network_score == 0.0
+        assert not row.network_discovered
+        assert row.to_row()["baseline_rank"] is None and row.to_row()["rank_change"] is None
 
 
 def test_no_network_keeps_only_direct_genes(toy) -> None:
@@ -106,6 +134,24 @@ def test_evaluate_mask_vs_restore(toy) -> None:
     assert mask.fold_results[0].n_eval_positives < restore.fold_results[0].n_eval_positives
     assert 0.0 <= mask.metric("auprc") <= 1.0
     assert 0.0 <= restore.metric("auprc") <= 1.0
+
+
+@pytest.mark.parametrize(("protocol", "propagations"), [("mask", 1), ("restore", 5)])
+def test_evaluation_reuses_only_the_fold_invariant_ranking(toy, monkeypatch, protocol, propagations):
+    from unittest.mock import Mock
+
+    from genepriori.pipeline import evaluation
+
+    cache, edges = toy
+    config = RunConfig()
+    config.evaluation.protocol = protocol
+    propagate = Mock(wraps=evaluation.propagate)
+    monkeypatch.setattr(evaluation, "propagate", propagate)
+
+    result = evaluate_evidence(prioritization_evidence(cache), config=config, edges=edges)
+
+    assert len(result.fold_results) == 5
+    assert propagate.call_count == propagations
 
 
 def prioritization_evidence(cache: Cache) -> DiseaseEvidence:

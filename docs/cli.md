@@ -163,6 +163,24 @@ its response arrives.
 Use `--no-progress` to hide these updates. With `--json`, use `--progress` to
 show updates on stderr while keeping stdout as JSON.
 
+After a successful debate, GenePriori compares the configured baseline, the
+same evidence weights without network propagation, and the best accepted claim
+from each requested holdout. It restores each claim's held-out weight to the
+configured baseline share, preserves the proportions among the other weights,
+and evaluates each candidate on every requested holdout. The selected method must
+match or beat the baseline AUPRC on each holdout, and the highest average relative
+gain wins. The final ranking uses the selected configuration with its evidence
+weights active. This comparison reuses the debate data and is exploratory.
+
+The command writes `ranked_genes.csv` and `result.json` in the output directory.
+For multiple diseases, it writes one pair of files under `rankings/<disease_id>/`.
+Each row includes the direct evidence score, normalized network score, and its
+rank under the original debate configuration. A positive `rank_change` means
+that the gene moved up. Genes absent from the baseline have blank comparison fields.
+The `ranking_selection` entry in `run_manifest.json` records the scores and chosen
+configuration. Use `--no-ranking` to save only the debate outputs. This final
+stage uses cached data and makes no additional LLM calls.
+
 ```bash
 genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both
 genepriori debate --diseases MONDO_0004989 --holdout genetics --mode llm

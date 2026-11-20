@@ -39,6 +39,9 @@ class RankedGene:
     evidence: Dict[str, float] = field(default_factory=dict)
     network_discovered: bool = False
     ensembl_id: str = ""
+    direct_score: float = 0.0
+    network_score: float = 0.0
+    baseline_rank: Optional[int] = None
 
     def to_row(self) -> Dict[str, Any]:
         row: Dict[str, Any] = {
@@ -52,6 +55,12 @@ class RankedGene:
         }
         for evidence_type in STANDARD_TYPES:
             row[evidence_type] = round(self.evidence.get(evidence_type, 0.0), 8)
+        row.update(
+            direct_score=round(self.direct_score, 8),
+            network_score=round(self.network_score, 8),
+            baseline_rank=self.baseline_rank,
+            rank_change=self.baseline_rank - self.rank if self.baseline_rank is not None else None,
+        )
         return row
 
 
@@ -95,6 +104,10 @@ class RankedResult:
             "network_discovered",
             "ensembl_id",
             *STANDARD_TYPES,
+            "direct_score",
+            "network_score",
+            "baseline_rank",
+            "rank_change",
         ]
         with open(target, "w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=columns)
@@ -124,6 +137,7 @@ def build_ranking(
 
     direct = detail.scores
     final: Dict[str, float] = dict(direct)
+    network_scores: Dict[str, float] = {}
     network_stats: Dict[str, Any] = {}
     network_cfg = config.network
 
@@ -141,6 +155,7 @@ def build_ranking(
             max_network_genes=network_cfg.max_network_genes,
             heat_steps=network_cfg.heat_steps,
             heat_step_size=network_cfg.heat_step_size,
+            network_scores_out=network_scores,
         )
         network_stats = ppi_summary(list(edges))
         network_stats["algorithm"] = network_cfg.algorithm
@@ -149,6 +164,7 @@ def build_ranking(
     rows: List[RankedGene] = []
     for position, gene in enumerate(ordered, start=1):
         direct_score = float(direct.get(gene, 0.0))
+        network_score = network_scores.get(gene, 0.0)
         rows.append(
             RankedGene(
                 rank=position,
@@ -157,8 +173,10 @@ def build_ranking(
                 confidence=float(detail.confidence.get(gene, 0.35)),
                 n_evidence_types=int(detail.n_types.get(gene, 0)),
                 evidence=dict(detail.contributions.get(gene, {})),
-                network_discovered=direct_score <= 0.0,
+                network_discovered=direct_score <= 0.0 and network_score > 0.0,
                 ensembl_id=evidence.ensembl_ids.get(gene, ""),
+                direct_score=direct_score,
+                network_score=network_score,
             )
         )
 
