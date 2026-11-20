@@ -24,7 +24,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import requests
 
@@ -145,6 +145,7 @@ class LLMClient:
         timeout: Optional[float] = None,
         max_retries: Optional[int] = None,
         session: Optional[requests.Session] = None,
+        progress: Optional[Callable[[str], None]] = None,
     ) -> None:
         config = config or LLMConfig()
         self.base_url = (
@@ -158,6 +159,7 @@ class LLMClient:
             0, int(config.max_retries if max_retries is None else max_retries)
         )
         self.session = session or requests.Session()
+        self.progress = progress
 
     @property
     def configured(self) -> bool:
@@ -184,6 +186,9 @@ class LLMClient:
         }
         last_error: Optional[BaseException] = None
         for attempt in range(self.max_retries + 1):
+            if self.progress is not None:
+                self.progress(f"Model request attempt {attempt + 1}/{self.max_retries + 1}")
+            response = None
             try:
                 response = self.session.post(
                     f"{self.base_url}/chat/completions",
@@ -199,7 +204,12 @@ class LLMClient:
             except Exception as exc:  # noqa: BLE001 - provider errors vary
                 last_error = exc
                 if attempt < self.max_retries:
-                    time.sleep(1.0 * (2 ** attempt))
+                    delay = 2 ** attempt
+                    if self.progress is not None:
+                        code = response.status_code if response is not None else None
+                        reason = f"HTTP {code}" if code is not None and code >= 400 else type(exc).__name__
+                        self.progress(f"Model request failed ({reason}); retrying in {delay}s")
+                    time.sleep(delay)
                     continue
         raise RuntimeError(f"LLM request failed: {last_error}") from last_error
 

@@ -155,7 +155,13 @@ win rate, sign test, BH-adjusted p-values) and `run_manifest.json`.
 
 ## `genepriori debate`
 
-Runs the multi-agent claim debate.
+Runs the multi-agent claim debate. The terminal shows live status for data
+loading, model requests, proposal screening, and local evaluation. Long steps
+report elapsed time every 10 seconds, and each agent's proposals appear when
+its response arrives.
+
+Use `--no-progress` to hide these updates. With `--json`, use `--progress` to
+show updates on stderr while keeping stdout as JSON.
 
 ```bash
 genepriori debate --diseases oncology --rounds 3 --budget 12 --holdout both

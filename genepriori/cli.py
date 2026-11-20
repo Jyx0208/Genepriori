@@ -511,8 +511,14 @@ def cmd_debate(args: argparse.Namespace) -> int:
     cache = _make_cache(args)
     diseases = _collect_diseases(args.diseases or ["oncology"])
     holdouts = SUPPORTED_HOLDOUTS if args.holdout == "both" else (args.holdout,)
+    show_progress = not args.quiet and (args.progress if args.progress is not None else not args.json)
+
+    def emit_progress(message: str) -> None:
+        print(f"{prefix} {message}", file=sys.stderr, flush=True)
+
     reports: Dict[str, Any] = {}
-    for holdout in holdouts:
+    for index, holdout in enumerate(holdouts, 1):
+        prefix = f"[Holdout {index}/{len(holdouts)}: {holdout}]"
         reports[holdout] = run_debate(
             diseases,
             config=config,
@@ -524,6 +530,7 @@ def cmd_debate(args: argparse.Namespace) -> int:
             offline=args.offline,
             refresh=args.refresh,
             llm_api_key=getattr(args, "llm_api_key", None),
+            progress=emit_progress if show_progress else None,
         )
     outdir = Path(args.out or "results/debate")
     outdir.mkdir(parents=True, exist_ok=True)
@@ -536,6 +543,8 @@ def cmd_debate(args: argparse.Namespace) -> int:
         inputs={"diseases": [d.disease_id for d in diseases]},
         outputs=["debate.json"],
     )
+    if show_progress:
+        print(f"[Debate complete] Saved report to {outdir / 'debate.json'}", file=sys.stderr, flush=True)
     if args.json:
         print(json.dumps(reports, indent=2))
     else:
@@ -828,6 +837,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--refresh", action="store_true")
 
     sp = add("debate", cmd_debate, "run the multi-agent claim debate")
+    sp.add_argument(
+        "--progress", action=argparse.BooleanOptionalAction, default=None,
+        help="show live debate progress and proposals on stderr (default unless using --json)",
+    )
     sp.add_argument("--diseases", action="append", default=None)
     sp.add_argument("--rounds", type=int, default=3)
     sp.add_argument("--budget", type=int, default=12)

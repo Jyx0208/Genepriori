@@ -340,6 +340,60 @@ def test_llm_client_sends_openai_payload(monkeypatch) -> None:
     assert captured["auth"] == "Bearer k"
 
 
+def test_llm_retry_reports_attempts(monkeypatch) -> None:
+    messages = []
+
+    class RateLimitedResponse:
+        status_code = 429
+
+    class SuccessfulResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "ok"}}]}
+
+    responses = iter([RateLimitedResponse(), SuccessfulResponse()])
+
+    class FakeSession:
+        def post(self, *args, **kwargs):
+            return next(responses)
+
+    monkeypatch.setattr("genepriori.agents.llm.time.sleep", lambda seconds: None)
+    client = LLMClient(
+        api_key="test-private-key", max_retries=1, session=FakeSession(), progress=messages.append
+    )
+    assert client.chat("system", "user") == "ok"
+    text = "\n".join(messages)
+    assert "Model request attempt 1/2" in text
+    assert "HTTP 429" in text and "retrying" in text
+    assert "Model request attempt 2/2" in text
+    assert "test-private-key" not in text
+
+
+def test_debate_wait_reports_elapsed_time(monkeypatch) -> None:
+    from threading import Event
+
+    from genepriori.agents import progress
+
+    waited = Event()
+    messages = []
+
+    def record(message):
+        messages.append(message)
+        if "elapsed" in message:
+            waited.set()
+
+    monkeypatch.setattr(progress, "WAIT_UPDATE_SECONDS", 0.01)
+    status = progress.DebateProgress(record)
+    with status.waiting("NetworkMechanism: waiting for model response"):
+        assert waited.wait(timeout=2)
+    assert messages[0] == "NetworkMechanism: waiting for model response"
+    assert messages[1].startswith(f"{messages[0]} (elapsed ")
+
+
 # -------------------------------------------------------------------- debate
 def test_run_debate_smoke(tmp_path: Path) -> None:
     root = build_toy_cache(tmp_path / "cache")

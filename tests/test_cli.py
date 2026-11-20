@@ -172,6 +172,104 @@ def test_debate_command(cache_dir: Path, tmp_path: Path, capsys) -> None:
     assert "drug" in payload
 
 
+def test_debate_shows_model_reply_and_assessment_as_they_happen(
+    cache_dir, tmp_path, capsys, monkeypatch
+):
+    private_key = "test-private-key"
+    monkeypatch.setenv("GENEPRIORI_LLM_API_KEY", private_key)
+    monkeypatch.setenv("GENEPRIORI_LLM_MODEL", "mock-flash")
+    monkeypatch.setenv("GENEPRIORI_LLM_BASE_URL", "https://example.com/v1")
+    seen = []
+
+    class Response:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            claim = {
+                "title": "Evaluate a new recipe",
+                "hypothesis": f"Expression may help. \x1b[31m{private_key}",
+                "evidence_type_weights": {"genetics": 0.6, "expression": 0.4},
+                "network_algorithm": "rwr",
+                "network_params": {"restart_prob": 0.3},
+                "falsification_test": "AUPRC does not improve",
+            }
+            return {"choices": [{"message": {"content": json.dumps({"claims": [claim]})}}]}
+
+    def model_post(session, url, **kwargs):
+        seen.append(capsys.readouterr().err)
+        return Response()
+
+    monkeypatch.setattr("requests.Session.post", model_post)
+    outdir = tmp_path / "debate"
+    assert main([
+        "debate", "--diseases", "MONDO_9000001", "--cache-dir", str(cache_dir),
+        "--offline", "--mode", "llm", "--holdout", "drug", "--rounds", "1",
+        "--budget", "2", "-o", str(outdir),
+    ]) == 0
+    assert "Loading STRING" in seen[0] and "Baseline AUPRC" in seen[0]
+    assert "CausalGenetics: waiting for model response" in seen[0] and "mock-flash" in seen[0]
+    assert "Hypothesis: Expression may help" in seen[1]
+    assert "NetworkMechanism: waiting for model response" in seen[1]
+    output = capsys.readouterr()
+    assert "not selected: duplicate proposal" in output.err
+    assert "Evaluating" in output.err and "measured AUPRC" in output.err
+    assert "round" in output.out and "auprc" in output.out
+    transcript = "".join(seen) + output.err
+    assert "AUPRC does not improve" in transcript and '"restart_prob": 0.3' in transcript
+    assert private_key not in transcript and "\x1b" not in transcript
+    report = json.loads((outdir / "debate.json").read_text(encoding="utf-8"))["drug"]
+    assert len(report["leaderboard"]) == 1 and report["llm_errors"] == []
+    assert report["llm"] == {
+        "enabled": True, "model": "mock-flash", "base_url": "https://example.com/v1",
+    }
+
+
+def test_debate_reports_llm_fallback(cache_dir, tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("GENEPRIORI_LLM_API_KEY", "test-private-key")
+
+    def unavailable(*args, **kwargs):
+        raise TimeoutError("test timeout")
+
+    monkeypatch.setattr("requests.Session.post", unavailable)
+    monkeypatch.setattr("genepriori.agents.llm.time.sleep", lambda seconds: None)
+    outdir = tmp_path / "debate"
+    assert main([
+        "debate", "--diseases", "MONDO_9000001", "--cache-dir", str(cache_dir),
+        "--offline", "--mode", "llm", "--holdout", "drug", "--rounds", "1",
+        "--budget", "2", "-o", str(outdir),
+    ]) == 0
+    output = capsys.readouterr()
+    assert "Model request attempt 3/3" in output.err
+    assert "falling back to heuristic proposals" in output.err
+    assert "from heuristic agent" in output.err
+    report = json.loads((outdir / "debate.json").read_text(encoding="utf-8"))["drug"]
+    assert len(report["llm_errors"]) == 4
+    assert all(not entry["claim_id"].startswith("llm-") for entry in report["leaderboard"])
+
+
+@pytest.mark.parametrize(
+    ("flags", "visible"),
+    [(["--progress"], True), (["--no-progress"], False), (["--progress", "--quiet"], False)],
+)
+def test_debate_progress_keeps_json_stdout_clean(cache_dir, tmp_path, capsys, flags, visible):
+    assert main([
+        "debate", "--diseases", "MONDO_9000001", "--cache-dir", str(cache_dir),
+        "--offline", "--mode", "heuristic", "--holdout", "both", "--rounds", "1",
+        "--budget", "2", "--json", "-o", str(tmp_path / "debate"), *flags,
+    ]) == 0
+    output = capsys.readouterr()
+    assert set(json.loads(output.out)) == {"drug", "genetics"}
+    assert ("Holdout 1/2" in output.err) is visible
+    assert ("Holdout 2/2" in output.err) is visible
+    assert ("Saved report to" in output.err) is visible
+    if visible:
+        assert output.err.index("Holdout 1/2") < output.err.index("Holdout 2/2")
+        assert output.err.index("Holdout 2/2") < output.err.index("Saved report to")
+
+
 def test_unknown_disease_returns_error_code(capsys) -> None:
     code = main(["rank", "--disease", "not a real disease", "--offline"])
     assert code == 2

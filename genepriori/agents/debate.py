@@ -7,9 +7,11 @@ LeakageAuditor is a hard gate before any claim is executed.
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import fields
-from typing import Any, Dict, List, Optional, Sequence
+from time import monotonic
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from ..config import NetworkConfig, RunConfig
 from ..data.cache import Cache
@@ -22,6 +24,7 @@ from .base import DebateContext, Proposal, ScoredClaim
 from .governor import Governor, GovernorConfig
 from .heuristic import default_agents
 from .llm import LLMAgent, LLMClient, resolve_api_key, resolve_mode
+from .progress import DebateProgress
 
 LOG = logging.getLogger(__name__)
 
@@ -96,6 +99,7 @@ def run_debate(
     client=None,
     llm_client: Optional[LLMClient] = None,
     llm_api_key: Optional[str] = None,
+    progress: Optional[Callable[[str], None]] = None,
 ) -> Dict[str, Any]:
     """Run the full debate for one holdout and return a JSON-serialisable report.
 
@@ -116,6 +120,8 @@ def run_debate(
             "or run with --mode heuristic."
         )
 
+    status = DebateProgress(progress, secret=api_key)
+    status(f"Starting debate: mode={resolved_mode}, rounds={rounds}, budget={budget}")
     governor = Governor(
         GovernorConfig(budget=budget, rounds=rounds, seed=config.evaluation.seed)
     )
@@ -123,29 +129,37 @@ def run_debate(
 
     evidence: Dict[str, DiseaseEvidence] = {}
     for disease in diseases:
-        evidence[disease.disease_id] = fetch_disease_evidence(
-            disease,
-            client=client,
-            cache=cache,
-            max_genes=base.max_genes,
-            refresh=refresh,
-            offline=offline,
-        )
+        with status.waiting(f"Loading Open Targets evidence for {disease.disease_id}"):
+            item = fetch_disease_evidence(
+                disease,
+                client=client,
+                cache=cache,
+                max_genes=base.max_genes,
+                refresh=refresh,
+                offline=offline,
+            )
+        evidence[disease.disease_id] = item
+        status(f"Evidence ready for {disease.disease_id}: {len(item.gene_type_scores):,} genes")
 
     edges = None
     if base.network.algorithm != "none":
-        edges = load_string_edges(
-            version=base.string_version,
-            min_combined_score=base.min_combined_score,
-            cache=cache,
-            refresh=refresh,
-            offline=offline,
-        )
+        with status.waiting(f"Loading STRING v{base.string_version} protein interaction network"):
+            edges = load_string_edges(
+                version=base.string_version,
+                min_combined_score=base.min_combined_score,
+                cache=cache,
+                refresh=refresh,
+                offline=offline,
+            )
+        status(f"STRING network ready: {len(edges):,} edges")
 
-    baseline_results = {
-        disease_id: evaluate_evidence(item, config=base, edges=edges)
-        for disease_id, item in evidence.items()
-    }
+    with status.waiting(f"Evaluating baseline locally ({base.network.algorithm})"):
+        baseline_results = {
+            disease_id: evaluate_evidence(item, config=base, edges=edges)
+            for disease_id, item in evidence.items()
+        }
+    baseline_metrics = _summarize(baseline_results, "auprc")
+    status(f"Baseline AUPRC: {baseline_metrics['mean']:.5f}")
     baseline_auprc = {k: r.metric("auprc") for k, r in baseline_results.items()}
     baseline_recall = {
         k: r.metric(f"recall_at_{base.evaluation.k}") for k, r in baseline_results.items()
@@ -153,8 +167,13 @@ def run_debate(
 
     agents = default_agents()
     llm_agents: List[LLMAgent] = []
+    model = base.llm.model
+    base_url = base.llm.base_url
     if resolved_mode == "llm":
-        llm_client = llm_client or LLMClient(base.llm, api_key=api_key)
+        llm_client = llm_client or LLMClient(base.llm, api_key=api_key, progress=status)
+        model = getattr(llm_client, "model", model)
+        base_url = getattr(llm_client, "base_url", base_url)
+        status(f"Model: {model}")
         llm_agents = [
             LLMAgent(
                 agent.name,
@@ -172,6 +191,7 @@ def run_debate(
     seen_fingerprints: set = set()
 
     for round_no in range(1, rounds + 1):
+        status(f"Round {round_no}/{rounds}: collecting proposals")
         context = DebateContext(
             diseases=list(diseases),
             evidence=evidence,
@@ -188,24 +208,57 @@ def run_debate(
         )
         proposals: List[Proposal] = []
         for agent in agents:
-            try:
-                proposals.extend(agent.propose(context))
-            except Exception as exc:  # noqa: BLE001 - one agent must not stop the round
-                LOG.warning("agent %s failed in round %d: %s", agent.name, round_no, exc)
-                if isinstance(agent, LLMAgent):
-                    llm_errors.append(
-                        {"round": round_no, "agent": agent.name, "error": str(exc)}
+            is_llm = isinstance(agent, LLMAgent)
+            action = "waiting for model response" if is_llm else "generating heuristic proposals"
+            started = monotonic()
+            with status.waiting(f"{agent.name}: {action}"):
+                try:
+                    offered = agent.propose(context)
+                except Exception as exc:  # noqa: BLE001 - one agent must not stop the round
+                    LOG.warning("agent %s failed in round %d: %s", agent.name, round_no, exc)
+                    status(f"{agent.name}: proposal generation failed ({type(exc).__name__}: {exc})")
+                    if is_llm:
+                        llm_errors.append(
+                            {"round": round_no, "agent": agent.name, "error": str(exc)}
+                        )
+                    continue
+            source = "heuristic agent"
+            if is_llm and agent.last_error:
+                status(f"{agent.name}: falling back to heuristic proposals ({agent.last_error})")
+            elif is_llm:
+                source = "model response"
+            status(f"{agent.name}: {len(offered)} proposal(s) from {source} in {monotonic() - started:.1f}s")
+            if progress is not None:
+                for proposal in offered:
+                    claim = proposal.claim
+                    status(f"  {claim.claim_id}: {claim.title}")
+                    status(f"    Hypothesis: {claim.hypothesis}")
+                    weights = claim.intervention["evidence_type_weights"]
+                    breakdown = ", ".join(f"{key} {value:.1%}" for key, value in weights.items())
+                    status(f"    Evidence weights: {breakdown}")
+                    algorithm = claim.intervention["network_algorithm"]
+                    params = json.dumps(claim.intervention["network_params"], ensure_ascii=False)
+                    status(f"    Network: {algorithm}; parameters: {params}")
+                    status(
+                        f"    Expected change: AUPRC {proposal.predicted_auprc:+.5f}, "
+                        f"Recall@{base.evaluation.k} {proposal.predicted_recall:+.5f}"
                     )
+                    if claim.falsification_test:
+                        status(f"    Falsification test: {claim.falsification_test}")
+            proposals.extend(offered)
         for agent in llm_agents:
             if agent.last_error:
                 llm_errors.append(
                     {"round": round_no, "agent": agent.name, "error": agent.last_error}
                 )
 
+        status(f"Round {round_no}/{rounds}: auditing {len(proposals)} proposal(s)")
         audited: List[Proposal] = []
         for proposal in proposals:
-            ok, reason = auditor.audit(proposal.claim, holdout)
+            claim = proposal.claim
+            ok, reason = auditor.audit(claim, holdout)
             if not ok:
+                status(f"{claim.agent_name}/{claim.claim_id}: leakage audit failed ({reason})")
                 decisions.append(
                     {
                         "round": round_no,
@@ -229,18 +282,36 @@ def run_debate(
         if round_no == 1:
             slots = max(0, slots - 1)  # the baseline occupies one slot
         selected = governor.select(audited, slots)
+        status(
+            f"Screening: {len(audited)}/{len(proposals)} passed the audit; "
+            f"{len(selected)} selected for local evaluation ({slots} slots)"
+        )
+        if progress is not None:
+            selected_ids = {id(proposal) for proposal in selected}
+            selected_fingerprints = {governor.fingerprint(proposal) for proposal in selected}
+            for proposal in audited:
+                if id(proposal) in selected_ids:
+                    continue
+                claim = proposal.claim
+                duplicate = governor.fingerprint(proposal) in selected_fingerprints
+                reason = "duplicate proposal" if duplicate else "outside this round's evaluation budget"
+                status(f"{claim.agent_name}/{claim.claim_id} not selected: {reason}")
 
-        for proposal in selected:
+        for index, proposal in enumerate(selected, 1):
+            claim = proposal.claim
+            name = f"{claim.agent_name}/{claim.claim_id}"
             predicted = governor.score(proposal)
             try:
-                results = _execute(
-                    proposal,
-                    base=base,
-                    evidence=evidence,
-                    edges=edges,
-                    holdout=holdout,
-                )
+                with status.waiting(f"Evaluating {index}/{len(selected)} locally: {name}"):
+                    results = _execute(
+                        proposal,
+                        base=base,
+                        evidence=evidence,
+                        edges=edges,
+                        holdout=holdout,
+                    )
             except (ValueError, TypeError) as exc:
+                status(f"{name}: evaluation failed ({exc})")
                 decisions.append(
                     {
                         "round": round_no,
@@ -259,6 +330,12 @@ def run_debate(
             auprc = _summarize(results, "auprc")
             recall = _summarize(results, f"recall_at_{base.evaluation.k}")
             decision = governor.decide(baseline_auprc, auprc["per_disease"])
+            verdict = "accepted" if decision.accepted else "rejected"
+            status(
+                f"{name}: baseline AUPRC {baseline_metrics['mean']:.5f}, "
+                f"measured AUPRC {auprc['mean']:.5f} (change {decision.mean_delta:+.5f}); "
+                f"{verdict}: {decision.reason}"
+            )
             entry = ScoredClaim(
                 claim=proposal.claim,
                 round=round_no,
@@ -292,17 +369,19 @@ def run_debate(
                     "intervention": proposal.claim.intervention,
                 }
             )
+        status(f"Round {round_no}/{rounds} complete: {len(leaderboard)} proposal(s) evaluated so far")
 
     accepted = [entry for entry in leaderboard if entry.accepted]
     best = max(accepted, key=lambda entry: entry.measured_auprc) if accepted else None
+    status(f"Holdout complete: {len(leaderboard)} evaluated, {len(accepted)} accepted")
 
     return {
         "mode": resolved_mode,
         "mode_requested": requested_mode,
         "llm": {
             "enabled": resolved_mode == "llm",
-            "base_url": base.llm.base_url,
-            "model": base.llm.model,
+            "base_url": base_url,
+            "model": model,
         },
         "llm_errors": llm_errors,
         "holdout": holdout,
@@ -310,7 +389,7 @@ def run_debate(
         "budget": budget,
         "diseases": [{"disease_id": d.disease_id, "name": d.name} for d in diseases],
         "baseline": {
-            "auprc": _summarize(baseline_results, "auprc"),
+            "auprc": baseline_metrics,
             "recall": _summarize(baseline_results, f"recall_at_{base.evaluation.k}"),
             "weights": dict(base.weights),
             "network": base.network.algorithm,
